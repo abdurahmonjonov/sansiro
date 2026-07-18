@@ -113,7 +113,7 @@ const ADMIN_PIN = "2024"; // O'zgartirish uchun shu qatorni tahrirlang
 
 const money = (n) => new Intl.NumberFormat("uz-UZ").format(Math.round(n)) + " so'm";
 
-const emptyDraft = { name: "", category: "Ayollar", price: "", sizes: "", image: null };
+const emptyDraft = { name: "", category: "Ayollar", price: "", sizes: "", images: [], description: "" };
 
 function resizeImageToBase64(file, maxWidth = 900, quality = 0.75) {
   return new Promise((resolve, reject) => {
@@ -229,7 +229,8 @@ export default function SansiroAdmin() {
       category: product.category,
       price: String(product.price),
       sizes: product.sizes.join(", "),
-      image: product.image || null,
+      images: product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []),
+      description: product.description || "",
     });
     setFormError(null);
   };
@@ -241,23 +242,28 @@ export default function SansiroAdmin() {
   };
 
   const handleImageChange = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setFormError("Iltimos, rasm fayl tanlang.");
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const invalid = files.find((f) => !f.type.startsWith("image/"));
+    if (invalid) {
+      setFormError("Iltimos, faqat rasm fayllarni tanlang.");
       return;
     }
     setImageProcessing(true);
     setFormError(null);
     try {
-      const base64 = await resizeImageToBase64(file);
-      setDraft((d) => ({ ...d, image: base64 }));
+      const resized = await Promise.all(files.map((f) => resizeImageToBase64(f)));
+      setDraft((d) => ({ ...d, images: [...d.images, ...resized] }));
     } catch (err) {
       setFormError("Rasmni yuklashda xatolik yuz berdi.");
     } finally {
       setImageProcessing(false);
       e.target.value = "";
     }
+  };
+
+  const removeDraftImage = (index) => {
+    setDraft((d) => ({ ...d, images: d.images.filter((_, i) => i !== index) }));
   };
 
   const submitDraft = async (e) => {
@@ -276,7 +282,9 @@ export default function SansiroAdmin() {
       category: draft.category,
       price: priceNum,
       sizes: sizeList,
-      image: draft.image || null,
+      images: draft.images,
+      image: draft.images[0] || null,
+      description: draft.description.trim(),
     };
     const updated = editingId
       ? products.map((p) => (p.id === editingId ? entry : p))
@@ -388,37 +396,54 @@ export default function SansiroAdmin() {
                   value={draft.sizes}
                   onChange={(e) => setDraft({ ...draft, sizes: e.target.value })}
                 />
-                <div className="md:col-span-4 flex items-center gap-4">
-                  {draft.image && (
-                    <img
-                      src={draft.image}
-                      alt="Oldindan ko'rish"
-                      style={{ width: 56, height: 56, objectFit: "cover", border: "1px solid var(--line)" }}
-                    />
+                <textarea
+                  className="input px-3 py-2 text-sm md:col-span-4"
+                  placeholder="Mahsulot tavsifi (ixtiyoriy) — mato, tikuv, parvarish bo'yicha ma'lumot"
+                  rows={3}
+                  value={draft.description}
+                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                />
+                <div className="md:col-span-4">
+                  <label className="text-xs block mb-2" style={{ color: "var(--ink-soft)" }}>
+                    Mahsulot rasmlari (bir nechtasini tanlashingiz mumkin)
+                  </label>
+                  {draft.images.length > 0 && (
+                    <div className="flex gap-2 flex-wrap mb-3">
+                      {draft.images.map((img, i) => (
+                        <div key={i} className="relative">
+                          <img
+                            src={img}
+                            alt={`Rasm ${i + 1}`}
+                            style={{ width: 64, height: 64, objectFit: "cover", border: i === 0 ? "2px solid var(--gold)" : "1px solid var(--line)" }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeDraftImage(i)}
+                            className="absolute"
+                            style={{ top: -6, right: -6, background: "var(--ink)", color: "var(--paper)", borderRadius: "999px", width: 18, height: 18, fontSize: 11, lineHeight: "18px" }}
+                            aria-label="Rasmni olib tashlash"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                  <div className="flex-1">
-                    <label className="text-xs block mb-1" style={{ color: "var(--ink-soft)" }}>
-                      Mahsulot rasmi
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      disabled={imageProcessing}
-                      className="text-xs"
-                    />
-                    {imageProcessing && (
-                      <p className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>Rasm qayta ishlanmoqda...</p>
-                    )}
-                  </div>
-                  {draft.image && (
-                    <button
-                      type="button"
-                      onClick={() => setDraft((d) => ({ ...d, image: null }))}
-                      className="btn-ghost px-3 py-1.5 text-xs"
-                    >
-                      RASMNI OLIB TASHLASH
-                    </button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                    disabled={imageProcessing}
+                    className="text-xs"
+                  />
+                  {imageProcessing && (
+                    <p className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>Rasmlar qayta ishlanmoqda...</p>
+                  )}
+                  {draft.images.length > 0 && (
+                    <p className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>
+                      Birinchi rasm (oltin ramkali) katalogda asosiy rasm sifatida ko'rinadi.
+                    </p>
                   )}
                 </div>
                 <div className="flex gap-2">
