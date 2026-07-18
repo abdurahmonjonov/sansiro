@@ -419,6 +419,7 @@ export default function Sansiro() {
           price: selectedProduct.price,
           size: selectedSize,
           qty: 1,
+          image: selectedProduct.image || null,
         },
       ];
     });
@@ -782,10 +783,16 @@ export default function Sansiro() {
                 <HeartIcon size={17} filled={wishlist.includes(p.id)} />
               </button>
               <div className="swatch aspect-square mx-3 mb-4">
-                <div className="swatch-mark">
-                  <Crown size={40} color="var(--gold-soft)" />
-                </div>
-                <div className="swatch-watermark">SANSIRO</div>
+                {p.image ? (
+                  <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <>
+                    <div className="swatch-mark">
+                      <Crown size={40} color="var(--gold-soft)" />
+                    </div>
+                    <div className="swatch-watermark">SANSIRO</div>
+                  </>
+                )}
               </div>
               <div className="px-3 md:px-4 pb-4">
                 <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{p.category}</div>
@@ -1007,7 +1014,11 @@ export default function Sansiro() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="swatch aspect-video">
-              <div className="swatch-mark"><Crown size={56} color="var(--gold-soft)" /></div>
+              {selectedProduct.image ? (
+                <img src={selectedProduct.image} alt={selectedProduct.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <div className="swatch-mark"><Crown size={56} color="var(--gold-soft)" /></div>
+              )}
             </div>
             <div className="p-5 md:p-6">
               <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{selectedProduct.category}</div>
@@ -1067,7 +1078,11 @@ export default function Sansiro() {
                 {cart.map((c) => (
                   <div key={`${c.productId}-${c.size}`} className="flex gap-3 pb-4" style={{ borderBottom: "1px solid var(--line)" }}>
                     <div className="swatch" style={{ width: 56, height: 56, flexShrink: 0 }}>
-                      <div className="swatch-mark"><Crown size={20} color="var(--gold-soft)" /></div>
+                      {c.image ? (
+                        <img src={c.image} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <div className="swatch-mark"><Crown size={20} color="var(--gold-soft)" /></div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{c.name}</div>
@@ -1281,7 +1296,11 @@ export default function Sansiro() {
               {wishlistProducts.map((p) => (
                 <div key={p.id} className="flex gap-3 pb-4" style={{ borderBottom: "1px solid var(--line)" }}>
                   <div className="swatch" style={{ width: 56, height: 56, flexShrink: 0 }}>
-                    <div className="swatch-mark"><Crown size={20} color="var(--gold-soft)" /></div>
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <div className="swatch-mark"><Crown size={20} color="var(--gold-soft)" /></div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{p.name}</div>
