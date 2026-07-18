@@ -113,7 +113,29 @@ const ADMIN_PIN = "2024"; // O'zgartirish uchun shu qatorni tahrirlang
 
 const money = (n) => new Intl.NumberFormat("uz-UZ").format(Math.round(n)) + " so'm";
 
-const emptyDraft = { name: "", category: "Ayollar", price: "", sizes: "" };
+const emptyDraft = { name: "", category: "Ayollar", price: "", sizes: "", image: null };
+
+function resizeImageToBase64(file, maxWidth = 900, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Faylni o'qib bo'lmadi"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Rasmni ochib bo'lmadi"));
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function SansiroAdmin() {
   const [unlocked, setUnlocked] = useState(false);
@@ -132,6 +154,7 @@ export default function SansiroAdmin() {
   const [editingId, setEditingId] = useState(null);
   const [formError, setFormError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [imageProcessing, setImageProcessing] = useState(false);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -206,6 +229,7 @@ export default function SansiroAdmin() {
       category: product.category,
       price: String(product.price),
       sizes: product.sizes.join(", "),
+      image: product.image || null,
     });
     setFormError(null);
   };
@@ -214,6 +238,26 @@ export default function SansiroAdmin() {
     setEditingId(null);
     setDraft(emptyDraft);
     setFormError(null);
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setFormError("Iltimos, rasm fayl tanlang.");
+      return;
+    }
+    setImageProcessing(true);
+    setFormError(null);
+    try {
+      const base64 = await resizeImageToBase64(file);
+      setDraft((d) => ({ ...d, image: base64 }));
+    } catch (err) {
+      setFormError("Rasmni yuklashda xatolik yuz berdi.");
+    } finally {
+      setImageProcessing(false);
+      e.target.value = "";
+    }
   };
 
   const submitDraft = async (e) => {
@@ -232,6 +276,7 @@ export default function SansiroAdmin() {
       category: draft.category,
       price: priceNum,
       sizes: sizeList,
+      image: draft.image || null,
     };
     const updated = editingId
       ? products.map((p) => (p.id === editingId ? entry : p))
@@ -343,8 +388,41 @@ export default function SansiroAdmin() {
                   value={draft.sizes}
                   onChange={(e) => setDraft({ ...draft, sizes: e.target.value })}
                 />
+                <div className="md:col-span-4 flex items-center gap-4">
+                  {draft.image && (
+                    <img
+                      src={draft.image}
+                      alt="Oldindan ko'rish"
+                      style={{ width: 56, height: 56, objectFit: "cover", border: "1px solid var(--line)" }}
+                    />
+                  )}
+                  <div className="flex-1">
+                    <label className="text-xs block mb-1" style={{ color: "var(--ink-soft)" }}>
+                      Mahsulot rasmi
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      disabled={imageProcessing}
+                      className="text-xs"
+                    />
+                    {imageProcessing && (
+                      <p className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>Rasm qayta ishlanmoqda...</p>
+                    )}
+                  </div>
+                  {draft.image && (
+                    <button
+                      type="button"
+                      onClick={() => setDraft((d) => ({ ...d, image: null }))}
+                      className="btn-ghost px-3 py-1.5 text-xs"
+                    >
+                      RASMNI OLIB TASHLASH
+                    </button>
+                  )}
+                </div>
                 <div className="flex gap-2">
-                  <button type="submit" disabled={saving} className="btn-ink flex-1 py-2 text-sm tracking-wide">
+                  <button type="submit" disabled={saving || imageProcessing} className="btn-ink flex-1 py-2 text-sm tracking-wide">
                     {editingId ? "SAQLASH" : "QO'SHISH"}
                   </button>
                   {editingId && (
@@ -371,11 +449,22 @@ export default function SansiroAdmin() {
               <div className="card divide-y" style={{ borderColor: "var(--line)" }}>
                 {products.map((p) => (
                   <div key={p.id} className="flex items-center justify-between gap-4 p-4" style={{ borderBottom: "1px solid var(--line)" }}>
-                    <div className="min-w-0">
-                      <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{p.category}</div>
-                      <div className="font-display text-base truncate">{p.name}</div>
-                      <div className="font-mono text-xs mt-1" style={{ color: "var(--gold)" }}>
-                        {money(p.price)} &middot; {p.sizes.join(", ")}
+                    <div className="flex items-center gap-3 min-w-0">
+                      {p.image ? (
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          style={{ width: 44, height: 44, objectFit: "cover", flexShrink: 0, border: "1px solid var(--line)" }}
+                        />
+                      ) : (
+                        <div style={{ width: 44, height: 44, flexShrink: 0, background: "var(--paper-deep)", border: "1px solid var(--line)" }} />
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{p.category}</div>
+                        <div className="font-display text-base truncate">{p.name}</div>
+                        <div className="font-mono text-xs mt-1" style={{ color: "var(--gold)" }}>
+                          {money(p.price)} &middot; {p.sizes.join(", ")}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
