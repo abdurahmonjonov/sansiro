@@ -1,39 +1,81 @@
-// Claude artifactlar ichida `window.storage` maxsus xotira API sifatida taqdim etiladi.
-// Haqiqiy saytda bunday API mavjud emas, shuning uchun uni brauzer localStorage
-// yordamida taqlid qilamiz — bir xil get/set/delete/list shaklida.
-//
-// MUHIM CHEKLOV: bu ma'lumotlarni faqat SHU BRAUZER/QURILMADA saqlaydi.
-// Ya'ni admin panelda qo'shilgan mahsulot faqat administrator kompyuterida
-// ko'rinadi — mijozning telefonida ko'rinmaydi. Haqiqiy, barcha qurilmalarda
-// bir xil ma'lumot ko'rsatish uchun (masalan Supabase) haqiqiy backend/baza kerak.
+// `window.storage` polyfill — endi umumiy (shared) ma'lumotlar Supabase orqali
+// barcha qurilmalarda REAL VAQTDA bir xil ko'rinadi. Shaxsiy (shared=false)
+// ma'lumotlar (savat, sevimlilar, profil) hali ham har bir brauzerda alohida
+// saqlanadi — bu to'g'ri, chunki ular shaxsiy narsalar.
 
-function storageKey(key, shared) {
-  return `sansiro:${shared ? "shared" : "local"}:${key}`;
+const SUPABASE_URL = "https://bhecsyaxlonixnguqlqw.supabase.co";
+// Faqat "publishable" (browser-safe) kalit — hech qachon "secret" kalitni bu yerga qo'ymang.
+const SUPABASE_KEY = "sb_publishable_wYtxp3u9s22HwfUcv10xFw_FWMmGRlO";
+
+const REST_URL = `${SUPABASE_URL}/rest/v1/kv_store`;
+const HEADERS = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+};
+
+function localKey(key) {
+  return `sansiro:local:${key}`;
 }
 
 const storage = {
   async get(key, shared = false) {
-    const raw = window.localStorage.getItem(storageKey(key, shared));
-    if (raw === null) {
-      throw new Error("Kalit topilmadi: " + key);
+    if (!shared) {
+      const raw = window.localStorage.getItem(localKey(key));
+      if (raw === null) throw new Error("Kalit topilmadi: " + key);
+      return { key, value: raw, shared };
     }
-    return { key, value: raw, shared };
+    const res = await fetch(`${REST_URL}?key=eq.${encodeURIComponent(key)}&select=value`, {
+      headers: HEADERS,
+    });
+    if (!res.ok) throw new Error("Supabase so'rovi muvaffaqiyatsiz");
+    const rows = await res.json();
+    if (!rows || rows.length === 0) throw new Error("Kalit topilmadi: " + key);
+    return { key, value: rows[0].value, shared };
   },
+
   async set(key, value, shared = false) {
-    window.localStorage.setItem(storageKey(key, shared), value);
+    if (!shared) {
+      window.localStorage.setItem(localKey(key), value);
+      return { key, value, shared };
+    }
+    const res = await fetch(`${REST_URL}?on_conflict=key`, {
+      method: "POST",
+      headers: { ...HEADERS, Prefer: "resolution=merge-duplicates" },
+      body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }),
+    });
+    if (!res.ok) throw new Error("Supabase'ga yozib bo'lmadi");
     return { key, value, shared };
   },
+
   async delete(key, shared = false) {
-    window.localStorage.removeItem(storageKey(key, shared));
+    if (!shared) {
+      window.localStorage.removeItem(localKey(key));
+      return { key, deleted: true, shared };
+    }
+    const res = await fetch(`${REST_URL}?key=eq.${encodeURIComponent(key)}`, {
+      method: "DELETE",
+      headers: HEADERS,
+    });
+    if (!res.ok) throw new Error("Supabase'dan o'chirib bo'lmadi");
     return { key, deleted: true, shared };
   },
+
   async list(prefix = "", shared = false) {
-    const fullPrefix = storageKey(prefix, shared);
-    const ownPrefix = `sansiro:${shared ? "shared" : "local"}:`;
-    const keys = Object.keys(window.localStorage)
-      .filter((k) => k.startsWith(fullPrefix))
-      .map((k) => k.slice(ownPrefix.length));
-    return { keys, prefix, shared };
+    if (!shared) {
+      const ownPrefix = localKey(prefix);
+      const fullPrefix = localKey("");
+      const keys = Object.keys(window.localStorage)
+        .filter((k) => k.startsWith(ownPrefix))
+        .map((k) => k.slice(fullPrefix.length));
+      return { keys, prefix, shared };
+    }
+    const res = await fetch(`${REST_URL}?key=like.${encodeURIComponent(prefix)}*&select=key`, {
+      headers: HEADERS,
+    });
+    if (!res.ok) throw new Error("Supabase so'rovi muvaffaqiyatsiz");
+    const rows = await res.json();
+    return { keys: rows.map((r) => r.key), prefix, shared };
   },
 };
 
