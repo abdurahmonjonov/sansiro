@@ -243,6 +243,41 @@ function HeartIcon({ size = 18, filled = false }) {
   );
 }
 
+function StarIcon({ size = 14, filled = false }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "var(--gold)" : "none"} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M12 2.5 15 9l7 1-5.2 4.9L18.2 22 12 18.3 5.8 22 7.2 14.9 2 10l7-1Z"
+        stroke="var(--gold)"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StarRating({ value, size = 14 }) {
+  return (
+    <span className="inline-flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <StarIcon key={n} size={size} filled={n <= Math.round(value)} />
+      ))}
+    </span>
+  );
+}
+
+function StarPicker({ value, onChange }) {
+  return (
+    <span className="inline-flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n} yulduz`}>
+          <StarIcon size={20} filled={n <= value} />
+        </button>
+      ))}
+    </span>
+  );
+}
+
 function TelegramIcon({ size = 18 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -295,6 +330,7 @@ const PRODUCTS_KEY = "sansiro:products";
 const ORDERS_KEY = "sansiro:orders";
 const WISHLIST_KEY = "sansiro:wishlist";
 const MESSAGES_KEY = "sansiro:messages";
+const REVIEWS_KEY = "sansiro:reviews";
 
 export default function Sansiro() {
   const [cart, setCart] = useState([]);
@@ -306,6 +342,12 @@ export default function Sansiro() {
   const [activeCategory, setActiveCategory] = useState("Barchasi");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ name: "", rating: 5, comment: "" });
+  const [reviewError, setReviewError] = useState(null);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "", notes: "" });
   const [orderError, setOrderError] = useState(null);
   const [lastOrderNumber, setLastOrderNumber] = useState(null);
@@ -398,6 +440,53 @@ export default function Sansiro() {
   const openProduct = (product) => {
     setSelectedProduct(product);
     setSelectedSize(product.sizes[0]);
+    setSelectedImageIndex(0);
+    setReviewForm({ name: "", rating: 5, comment: "" });
+    setReviewError(null);
+    loadReviews(product.id);
+  };
+
+  const loadReviews = async (productId) => {
+    setReviewsLoading(true);
+    try {
+      const result = await window.storage.get(REVIEWS_KEY, true);
+      const list = result && result.value ? JSON.parse(result.value) : [];
+      setReviews(list.filter((r) => r.productId === productId));
+    } catch (e) {
+      setReviews([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewForm.name.trim() || !reviewForm.comment.trim()) {
+      setReviewError("Ismingizni va sharhingizni kiriting.");
+      return;
+    }
+    setReviewError(null);
+    setReviewSubmitting(true);
+    const entry = {
+      id: `rev-${Date.now()}`,
+      productId: selectedProduct.id,
+      name: reviewForm.name.trim(),
+      rating: reviewForm.rating,
+      comment: reviewForm.comment.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      const result = await window.storage.get(REVIEWS_KEY, true);
+      const list = result && result.value ? JSON.parse(result.value) : [];
+      list.unshift(entry);
+      await window.storage.set(REVIEWS_KEY, JSON.stringify(list), true);
+      setReviews((current) => [entry, ...current]);
+    } catch (err) {
+      setReviewError("Sharhni saqlashda xatolik yuz berdi.");
+    } finally {
+      setReviewSubmitting(false);
+      setReviewForm({ name: "", rating: 5, comment: "" });
+    }
   };
 
   const addToCart = () => {
@@ -419,7 +508,7 @@ export default function Sansiro() {
           price: selectedProduct.price,
           size: selectedSize,
           qty: 1,
-          image: selectedProduct.image || null,
+          image: (selectedProduct.images && selectedProduct.images[0]) || selectedProduct.image || null,
         },
       ];
     });
@@ -1006,52 +1095,142 @@ export default function Sansiro() {
       )}
 
       {/* Product quick view modal */}
-      {selectedProduct && (
-        <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
-          <div
-            className="fade-in max-w-lg w-full"
-            style={{ background: "var(--paper)", border: "1px solid var(--line)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="swatch aspect-video">
-              {selectedProduct.image ? (
-                <img src={selectedProduct.image} alt={selectedProduct.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
-                <div className="swatch-mark"><Crown size={56} color="var(--gold-soft)" /></div>
-              )}
-            </div>
-            <div className="p-5 md:p-6">
-              <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{selectedProduct.category}</div>
-              <div className="font-display text-xl md:text-2xl mt-1">{selectedProduct.name}</div>
-              <div className="font-mono text-base mt-2" style={{ color: "var(--gold)" }}>{money(selectedProduct.price)}</div>
-
-              <div className="mt-5">
-                <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>O'LCHAM</div>
-                <div className="flex gap-2 flex-wrap">
-                  {selectedProduct.sizes.map((s) => (
+      {selectedProduct && (() => {
+        const galleryImages =
+          selectedProduct.images && selectedProduct.images.length > 0
+            ? selectedProduct.images
+            : selectedProduct.image
+            ? [selectedProduct.image]
+            : [];
+        const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : null;
+        return (
+          <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
+            <div
+              className="fade-in max-w-lg w-full overflow-y-auto"
+              style={{ background: "var(--paper)", border: "1px solid var(--line)", maxHeight: "90vh" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="swatch aspect-video">
+                {galleryImages.length > 0 ? (
+                  <img
+                    src={galleryImages[selectedImageIndex] || galleryImages[0]}
+                    alt={selectedProduct.name}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <div className="swatch-mark"><Crown size={56} color="var(--gold-soft)" /></div>
+                )}
+              </div>
+              {galleryImages.length > 1 && (
+                <div className="flex gap-2 p-3 overflow-x-auto" style={{ borderBottom: "1px solid var(--line)" }}>
+                  {galleryImages.map((img, i) => (
                     <button
-                      key={s}
-                      onClick={() => setSelectedSize(s)}
-                      className={`pill px-3 py-1 text-sm ${selectedSize === s ? "active" : ""}`}
+                      key={i}
+                      onClick={() => setSelectedImageIndex(i)}
+                      style={{
+                        width: 48,
+                        height: 48,
+                        flexShrink: 0,
+                        border: i === selectedImageIndex ? "2px solid var(--gold)" : "1px solid var(--line)",
+                      }}
                     >
-                      {s}
+                      <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </button>
                   ))}
                 </div>
-              </div>
+              )}
+              <div className="p-5 md:p-6">
+                <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{selectedProduct.category}</div>
+                <div className="font-display text-xl md:text-2xl mt-1">{selectedProduct.name}</div>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="font-mono text-base" style={{ color: "var(--gold)" }}>{money(selectedProduct.price)}</span>
+                  {avgRating && (
+                    <span className="flex items-center gap-1 text-xs" style={{ color: "var(--ink-soft)" }}>
+                      <StarRating value={avgRating} /> ({reviews.length})
+                    </span>
+                  )}
+                </div>
 
-              <div className="flex gap-3 mt-8">
-                <button onClick={() => setSelectedProduct(null)} className="btn-ghost flex-1 py-3 text-xs md:text-sm tracking-wide">
-                  BEKOR QILISH
-                </button>
-                <button onClick={addToCart} className="btn-ink flex-1 py-3 text-xs md:text-sm tracking-wide">
-                  SAVATGA QO'SHISH
-                </button>
+                {selectedProduct.description && (
+                  <p className="text-sm mt-4 leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+                    {selectedProduct.description}
+                  </p>
+                )}
+
+                <div className="mt-5">
+                  <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>O'LCHAM</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedProduct.sizes.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setSelectedSize(s)}
+                        className={`pill px-3 py-1 text-sm ${selectedSize === s ? "active" : ""}`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-8">
+                  <button onClick={() => setSelectedProduct(null)} className="btn-ghost flex-1 py-3 text-xs md:text-sm tracking-wide">
+                    BEKOR QILISH
+                  </button>
+                  <button onClick={addToCart} className="btn-ink flex-1 py-3 text-xs md:text-sm tracking-wide">
+                    SAVATGA QO'SHISH
+                  </button>
+                </div>
+
+                <div className="mt-8 pt-6" style={{ borderTop: "1px solid var(--line)" }}>
+                  <div className="font-display text-lg mb-4">Mijozlar sharhlari</div>
+
+                  {reviewsLoading ? (
+                    <p className="text-xs" style={{ color: "var(--ink-soft)" }}>Yuklanmoqda...</p>
+                  ) : reviews.length === 0 ? (
+                    <p className="text-xs mb-4" style={{ color: "var(--ink-soft)" }}>Hali sharh yo'q. Birinchi bo'lib fikr bildiring.</p>
+                  ) : (
+                    <div className="flex flex-col gap-4 mb-6">
+                      {reviews.map((r) => (
+                        <div key={r.id} className="text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{r.name}</span>
+                            <StarRating value={r.rating} size={12} />
+                          </div>
+                          <p className="mt-1" style={{ color: "var(--ink-soft)" }}>{r.comment}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <form onSubmit={submitReview} className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Bahoingiz:</span>
+                      <StarPicker value={reviewForm.rating} onChange={(n) => setReviewForm({ ...reviewForm, rating: n })} />
+                    </div>
+                    <input
+                      className="input-line py-2 text-sm"
+                      placeholder="Ismingiz"
+                      value={reviewForm.name}
+                      onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
+                    />
+                    <textarea
+                      className="input-line py-2 text-sm w-full"
+                      rows={3}
+                      placeholder="Fikringizni yozing..."
+                      value={reviewForm.comment}
+                      onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                    />
+                    {reviewError && <p className="text-xs" style={{ color: "var(--danger)" }}>{reviewError}</p>}
+                    <button type="submit" disabled={reviewSubmitting} className="btn-ghost py-2 text-xs tracking-wide self-start px-5">
+                      {reviewSubmitting ? "YUBORILMOQDA..." : "SHARH QOLDIRISH"}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Scrim shared by cart + auth drawers */}
       <div className={`scrim ${panel !== "none" ? "open" : ""}`} onClick={() => setPanel("none")} />
