@@ -113,7 +113,7 @@ const ADMIN_PIN = "2024"; // O'zgartirish uchun shu qatorni tahrirlang
 
 const money = (n) => new Intl.NumberFormat("uz-UZ").format(Math.round(n)) + " so'm";
 
-const emptyDraft = { name: "", category: "Ayollar", price: "", sizes: "", images: [], description: "" };
+const emptyDraft = { name: "", category: "Ayollar", price: "", sizes: "", colors: "", images: [], description: "" };
 
 function resizeImageToBase64(file, maxWidth = 900, quality = 0.75) {
   return new Promise((resolve, reject) => {
@@ -229,6 +229,7 @@ export default function SansiroAdmin() {
       category: product.category,
       price: String(product.price),
       sizes: product.sizes.join(", "),
+      colors: (product.colors || []).join(", "),
       images: product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []),
       description: product.description || "",
     });
@@ -270,6 +271,7 @@ export default function SansiroAdmin() {
     e.preventDefault();
     const priceNum = Number(draft.price);
     const sizeList = draft.sizes.split(",").map((s) => s.trim()).filter(Boolean);
+    const colorList = draft.colors.split(",").map((c) => c.trim()).filter(Boolean);
     if (!draft.name.trim() || !priceNum || sizeList.length === 0) {
       setFormError("Nomi, narxi va kamida bitta o'lchamni to'g'ri kiriting.");
       return;
@@ -282,6 +284,7 @@ export default function SansiroAdmin() {
       category: draft.category,
       price: priceNum,
       sizes: sizeList,
+      colors: colorList,
       images: draft.images,
       image: draft.images[0] || null,
       description: draft.description.trim(),
@@ -391,10 +394,16 @@ export default function SansiroAdmin() {
                   onChange={(e) => setDraft({ ...draft, price: e.target.value.replace(/[^0-9]/g, "") })}
                 />
                 <input
-                  className="input px-3 py-2 text-sm md:col-span-3"
+                  className="input px-3 py-2 text-sm md:col-span-2"
                   placeholder="O'lchamlar, vergul bilan (masalan: S, M, L)"
                   value={draft.sizes}
                   onChange={(e) => setDraft({ ...draft, sizes: e.target.value })}
+                />
+                <input
+                  className="input px-3 py-2 text-sm md:col-span-2"
+                  placeholder="Ranglar, vergul bilan (ixtiyoriy, masalan: Qora, Oq, Ko'k)"
+                  value={draft.colors}
+                  onChange={(e) => setDraft({ ...draft, colors: e.target.value })}
                 />
                 <textarea
                   className="input px-3 py-2 text-sm md:col-span-4"
@@ -555,8 +564,8 @@ export default function SansiroAdmin() {
                     )}
                     <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--line)" }}>
                       {(o.items || []).map((it) => (
-                        <div key={`${it.productId}-${it.size}`} className="flex justify-between text-xs py-1">
-                          <span>{it.name} ({it.size}) &times; {it.qty}</span>
+                        <div key={`${it.productId}-${it.size}-${it.color || ""}`} className="flex justify-between text-xs py-1">
+                          <span>{it.name} ({it.size}{it.color ? `, ${it.color}` : ""}) &times; {it.qty}</span>
                           <span className="font-mono">{money(it.price * it.qty)}</span>
                         </div>
                       ))}
