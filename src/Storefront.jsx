@@ -310,6 +310,93 @@ const SOCIAL_LINKS = {
 
 const CATEGORIES = ["Barchasi", "Ayollar", "Erkaklar", "Aksessuar"];
 
+const LANGUAGES = [
+  { code: "uz", label: "UZ" },
+  { code: "ru", label: "RU" },
+  { code: "en", label: "EN" },
+];
+
+const TRANSLATIONS = {
+  uz: {
+    nav_catalog: "Katalog", nav_about: "Haqida", nav_contact: "Aloqa", nav_admin: "Admin panel",
+    login: "KIRISH", cart: "SAVAT", wishlist_label: "Sevimlilar",
+    hero_tagline: "Cheklangan seriyadagi, qo'lda ishlangan hashamatli kiyimlar",
+    hero_cta: "KATALOGNI KO'RISH",
+    see_all: "BARCHASINI KO'RISH", back_to_home: "\u2190 Bosh sahifaga qaytish", back_to_catalog: "\u2190 Katalogga qaytish",
+    all_products_title: "Barcha mahsulotlar", search_placeholder: "Mahsulot qidirish...",
+    no_results: "Hech narsa topilmadi. Boshqa kalit so'z yoki kategoriya bilan urinib ko'ring.",
+    size_label: "O'LCHAM", color_label: "RANG", add_to_cart: "SAVATGA QO'SHISH",
+    reviews_title: "Mijozlar sharhlari", no_reviews: "Hali sharh yo'q. Birinchi bo'lib fikr bildiring.",
+    your_rating: "Bahoingiz:", your_name: "Ismingiz", write_review: "Fikringizni yozing...",
+    submit_review: "SHARH QOLDIRISH", sending: "YUBORILMOQDA...",
+    cart_empty: "Savatingiz bo'sh. Katalogdan mahsulot tanlang.", size_word: "O'lcham", color_word: "Rang",
+    total: "Jami", place_order: "BUYURTMA BERISH", remove: "O'chirish",
+    about_title: "Haqida", contact_title: "Aloqa", account_title: "Hisobim",
+    my_orders: "MENING BUYURTMALARIM", logout: "CHIQISH",
+    return_policy: "Qaytarish siyosati", privacy_policy: "Maxfiylik siyosati",
+    all_rights: "Barcha huquqlar himoyalangan.",
+    checkout_name: "Ism familiya", checkout_phone: "Telefon raqam", checkout_address: "Yetkazib berish manzili",
+    checkout_notes: "Izoh (ixtiyoriy)", confirm_order: "BUYURTMANI TASDIQLASH", back: "ORQAGA",
+    order_details: "Buyurtma ma'lumotlari", order_confirmed: "Buyurtma qabul qilindi", close: "YOPISH",
+    thank_you: "Rahmat", order_number_label: "Buyurtmangiz raqami:", will_call: "Tez orada operatorimiz sizga qo'ng'iroq qilib, buyurtmani tasdiqlaydi.",
+    login_register_title: "Kirish / Ro'yxatdan o'tish"
+  },
+  ru: {
+    nav_catalog: "Каталог", nav_about: "О нас", nav_contact: "Контакты", nav_admin: "Админ-панель",
+    login: "ВОЙТИ", cart: "КОРЗИНА", wishlist_label: "Избранное",
+    hero_tagline: "Роскошная одежда ограниченной серии ручной работы",
+    hero_cta: "СМОТРЕТЬ КАТАЛОГ",
+    see_all: "ПОКАЗАТЬ ВСЕ", back_to_home: "\u2190 На главную", back_to_catalog: "\u2190 Назад в каталог",
+    all_products_title: "Все товары", search_placeholder: "Поиск товара...",
+    no_results: "Ничего не найдено. Попробуйте другой запрос или категорию.",
+    size_label: "РАЗМЕР", color_label: "ЦВЕТ", add_to_cart: "В КОРЗИНУ",
+    reviews_title: "Отзывы клиентов", no_reviews: "Отзывов пока нет. Будьте первым.",
+    your_rating: "Ваша оценка:", your_name: "Ваше имя", write_review: "Напишите отзыв...",
+    submit_review: "ОСТАВИТЬ ОТЗЫВ", sending: "ОТПРАВКА...",
+    cart_empty: "Ваша корзина пуста. Выберите товар из каталога.", size_word: "Размер", color_word: "Цвет",
+    total: "Итого", place_order: "ОФОРМИТЬ ЗАКАЗ", remove: "Удалить",
+    about_title: "О нас", contact_title: "Контакты", account_title: "Мой аккаунт",
+    my_orders: "МОИ ЗАКАЗЫ", logout: "ВЫЙТИ",
+    return_policy: "Политика возврата", privacy_policy: "Политика конфиденциальности",
+    all_rights: "Все права защищены.",
+    checkout_name: "Имя и фамилия", checkout_phone: "Номер телефона", checkout_address: "Адрес доставки",
+    checkout_notes: "Комментарий (необязательно)", confirm_order: "ПОДТВЕРДИТЬ ЗАКАЗ", back: "НАЗАД",
+    order_details: "Данные заказа", order_confirmed: "Заказ принят", close: "ЗАКРЫТЬ",
+    thank_you: "Спасибо", order_number_label: "Номер вашего заказа:", will_call: "Наш оператор скоро позвонит вам и подтвердит заказ.",
+    login_register_title: "Вход / Регистрация"
+  },
+  en: {
+    nav_catalog: "Catalog", nav_about: "About", nav_contact: "Contact", nav_admin: "Admin panel",
+    login: "SIGN IN", cart: "CART", wishlist_label: "Wishlist",
+    hero_tagline: "Limited-edition, handcrafted luxury clothing",
+    hero_cta: "VIEW CATALOG",
+    see_all: "SEE ALL", back_to_home: "\u2190 Back to home", back_to_catalog: "\u2190 Back to catalog",
+    all_products_title: "All products", search_placeholder: "Search products...",
+    no_results: "Nothing found. Try a different keyword or category.",
+    size_label: "SIZE", color_label: "COLOR", add_to_cart: "ADD TO CART",
+    reviews_title: "Customer reviews", no_reviews: "No reviews yet. Be the first to share your thoughts.",
+    your_rating: "Your rating:", your_name: "Your name", write_review: "Write your review...",
+    submit_review: "SUBMIT REVIEW", sending: "SENDING...",
+    cart_empty: "Your cart is empty. Choose something from the catalog.", size_word: "Size", color_word: "Color",
+    total: "Total", place_order: "PLACE ORDER", remove: "Remove",
+    about_title: "About", contact_title: "Contact", account_title: "My account",
+    my_orders: "MY ORDERS", logout: "SIGN OUT",
+    return_policy: "Return policy", privacy_policy: "Privacy policy",
+    all_rights: "All rights reserved.",
+    checkout_name: "Full name", checkout_phone: "Phone number", checkout_address: "Delivery address",
+    checkout_notes: "Note (optional)", confirm_order: "CONFIRM ORDER", back: "BACK",
+    order_details: "Order details", order_confirmed: "Order confirmed", close: "CLOSE",
+    thank_you: "Thank you", order_number_label: "Your order number:", will_call: "Our operator will call you shortly to confirm the order.",
+    login_register_title: "Sign in / Register"
+  },
+};
+
+const CATEGORY_LABELS = {
+  uz: { "Barchasi": "Barchasi", "Ayollar": "Ayollar", "Erkaklar": "Erkaklar", "Aksessuar": "Aksessuar" },
+  ru: { "Barchasi": "Все", "Ayollar": "Женщины", "Erkaklar": "Мужчины", "Aksessuar": "Аксессуары" },
+  en: { "Barchasi": "All", "Ayollar": "Women", "Erkaklar": "Men", "Aksessuar": "Accessories" },
+};
+
 const COLOR_HEX = {
   "qora": "#1A1A1A", "oq": "#F5F5F5", "kulrang": "#9B9B9B", "kul rang": "#9B9B9B",
   "qizil": "#B23A48", "ko'k": "#3B5C8E", "kok": "#3B5C8E", "havorang": "#7FA8C9",
@@ -452,6 +539,30 @@ export default function Sansiro() {
   const [currentPath, setCurrentPath] = useState(() =>
     typeof window !== "undefined" ? window.location.pathname : "/"
   );
+
+  const [lang, setLang] = useState("uz");
+  const [langLoaded, setLangLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const result = await window.storage.get("sansiro:lang", false);
+        if (result && result.value && TRANSLATIONS[result.value]) setLang(result.value);
+      } catch (e) {
+        // default to uz
+      } finally {
+        setLangLoaded(true);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!langLoaded) return;
+    window.storage.set("sansiro:lang", lang, false).catch(() => {});
+  }, [lang, langLoaded]);
+
+  const t = (key) => (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.uz[key] || key;
+  const catLabel = (cat) => (CATEGORY_LABELS[lang] && CATEGORY_LABELS[lang][cat]) || cat;
 
   useEffect(() => {
     const onPopState = () => setCurrentPath(window.location.pathname);
@@ -807,7 +918,7 @@ export default function Sansiro() {
         )}
       </div>
       <div className="px-3 md:px-4 pb-4">
-        <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{p.category}</div>
+        <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{catLabel(p.category)}</div>
         <div className="font-display text-base md:text-lg mt-1">{p.name}</div>
         <div className="font-mono text-xs md:text-sm mt-2" style={{ color: "var(--gold)" }}>{money(p.price)}</div>
       </div>
@@ -874,13 +985,26 @@ export default function Sansiro() {
 
           <div className="hidden md:flex items-center gap-8 text-sm" style={{ color: "var(--ink-soft)" }}>
             <button onClick={() => scrollToSection("catalog")} className="hover:underline">
-              Katalog
+              {t("nav_catalog")}
             </button>
-            <button onClick={() => scrollToSection("haqida")} className="hover:underline">Haqida</button>
-            <button onClick={() => scrollToSection("aloqa")} className="hover:underline">Aloqa</button>
+            <button onClick={() => scrollToSection("haqida")} className="hover:underline">{t("nav_about")}</button>
+            <button onClick={() => scrollToSection("aloqa")} className="hover:underline">{t("nav_contact")}</button>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-3 md:gap-5">
+            <div className="hidden sm:flex items-center gap-1 font-mono text-xs" style={{ color: "var(--ink-soft)" }}>
+              {LANGUAGES.map((l, i) => (
+                <React.Fragment key={l.code}>
+                  {i > 0 && <span>/</span>}
+                  <button
+                    onClick={() => setLang(l.code)}
+                    style={{ color: lang === l.code ? "var(--ink)" : "var(--ink-soft)", fontWeight: lang === l.code ? 600 : 400 }}
+                  >
+                    {l.label}
+                  </button>
+                </React.Fragment>
+              ))}
+            </div>
             <button
               onClick={() => setPanel("auth")}
               className="flex items-center gap-1.5 text-xs md:text-sm"
@@ -888,7 +1012,7 @@ export default function Sansiro() {
             >
               <UserIcon size={16} />
               <span className="hidden sm:inline font-mono">
-                {profile ? profile.name.split(" ")[0].toUpperCase() : "KIRISH"}
+                {profile ? profile.name.split(" ")[0].toUpperCase() : t("login")}
               </span>
             </button>
             <button
@@ -911,7 +1035,7 @@ export default function Sansiro() {
               className="relative text-xs md:text-sm flex items-center gap-2 font-mono"
               aria-label="Savat"
             >
-              SAVAT
+              {t("cart")}
               {itemCount > 0 && (
                 <span
                   className="inline-flex items-center justify-center rounded-full text-xs"
@@ -930,10 +1054,23 @@ export default function Sansiro() {
               onClick={() => { scrollToSection("catalog"); setMobileMenuOpen(false); }}
               className="text-left py-2.5"
             >
-              Katalog
+              {t("nav_catalog")}
             </button>
-            <button onClick={() => { scrollToSection("haqida"); setMobileMenuOpen(false); }} className="text-left py-2.5">Haqida</button>
-            <button onClick={() => { scrollToSection("aloqa"); setMobileMenuOpen(false); }} className="text-left py-2.5">Aloqa</button>
+            <button onClick={() => { scrollToSection("haqida"); setMobileMenuOpen(false); }} className="text-left py-2.5">{t("nav_about")}</button>
+            <button onClick={() => { scrollToSection("aloqa"); setMobileMenuOpen(false); }} className="text-left py-2.5">{t("nav_contact")}</button>
+            <div className="flex items-center gap-3 font-mono text-xs pt-2">
+              {LANGUAGES.map((l, i) => (
+                <React.Fragment key={l.code}>
+                  {i > 0 && <span>/</span>}
+                  <button
+                    onClick={() => setLang(l.code)}
+                    style={{ color: lang === l.code ? "var(--ink)" : "var(--ink-soft)", fontWeight: lang === l.code ? 600 : 400 }}
+                  >
+                    {l.label}
+                  </button>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         </div>
       </nav>
@@ -949,7 +1086,7 @@ export default function Sansiro() {
         return (
           <section className="px-5 md:px-12 py-8 max-w-4xl mx-auto fade-in">
             <button onClick={() => scrollToSection("catalog")} className="text-xs mb-6 hover:underline" style={{ color: "var(--ink-soft)" }}>
-              &larr; Katalogga qaytish
+              {t("back_to_catalog")}
             </button>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -986,7 +1123,7 @@ export default function Sansiro() {
               </div>
 
               <div>
-                <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{selectedProduct.category}</div>
+                <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{catLabel(selectedProduct.category)}</div>
                 <div className="font-display text-2xl md:text-3xl mt-1">{selectedProduct.name}</div>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="font-mono text-lg" style={{ color: "var(--gold)" }}>{money(selectedProduct.price)}</span>
@@ -1004,7 +1141,7 @@ export default function Sansiro() {
                 )}
 
                 <div className="mt-5">
-                  <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>O'LCHAM</div>
+                  <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>{t("size_label")}</div>
                   <div className="flex gap-2 flex-wrap">
                     {selectedProduct.sizes.map((s) => (
                       <button
@@ -1021,7 +1158,7 @@ export default function Sansiro() {
                 {selectedProduct.colors && selectedProduct.colors.length > 0 && (
                   <div className="mt-5">
                     <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>
-                      RANG{selectedColor ? `: ${selectedColor}` : ""}
+                      {t("color_label")}{selectedColor ? `: ${selectedColor}` : ""}
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {selectedProduct.colors.map((c) => {
@@ -1055,16 +1192,16 @@ export default function Sansiro() {
                 )}
 
                 <button onClick={addToCart} className="btn-ink w-full py-3 text-sm tracking-wide mt-8">
-                  SAVATGA QO'SHISH
+                  {t("add_to_cart")}
                 </button>
 
                 <div className="mt-10 pt-6" style={{ borderTop: "1px solid var(--line)" }}>
-                  <div className="font-display text-lg mb-4">Mijozlar sharhlari</div>
+                  <div className="font-display text-lg mb-4">{t("reviews_title")}</div>
 
                   {reviewsLoading ? (
-                    <p className="text-xs" style={{ color: "var(--ink-soft)" }}>Yuklanmoqda...</p>
+                    <p className="text-xs" style={{ color: "var(--ink-soft)" }}>...</p>
                   ) : reviews.length === 0 ? (
-                    <p className="text-xs mb-4" style={{ color: "var(--ink-soft)" }}>Hali sharh yo'q. Birinchi bo'lib fikr bildiring.</p>
+                    <p className="text-xs mb-4" style={{ color: "var(--ink-soft)" }}>{t("no_reviews")}</p>
                   ) : (
                     <div className="flex flex-col gap-4 mb-6">
                       {reviews.map((r) => (
@@ -1081,25 +1218,25 @@ export default function Sansiro() {
 
                   <form onSubmit={submitReview} className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Bahoingiz:</span>
+                      <span className="text-xs" style={{ color: "var(--ink-soft)" }}>{t("your_rating")}</span>
                       <StarPicker value={reviewForm.rating} onChange={(n) => setReviewForm({ ...reviewForm, rating: n })} />
                     </div>
                     <input
                       className="input-line py-2 text-sm"
-                      placeholder="Ismingiz"
+                      placeholder={t("your_name")}
                       value={reviewForm.name}
                       onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
                     />
                     <textarea
                       className="input-line py-2 text-sm w-full"
                       rows={3}
-                      placeholder="Fikringizni yozing..."
+                      placeholder={t("write_review")}
                       value={reviewForm.comment}
                       onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                     />
                     {reviewError && <p className="text-xs" style={{ color: "var(--danger)" }}>{reviewError}</p>}
                     <button type="submit" disabled={reviewSubmitting} className="btn-ghost py-2 text-xs tracking-wide self-start px-5">
-                      {reviewSubmitting ? "YUBORILMOQDA..." : "SHARH QOLDIRISH"}
+                      {reviewSubmitting ? t("sending") : t("submit_review")}
                     </button>
                   </form>
                 </div>
@@ -1110,12 +1247,12 @@ export default function Sansiro() {
       })() : currentPath === "/katalog" ? (
         <section className="px-4 md:px-12 py-10 max-w-5xl mx-auto fade-in">
           <button onClick={() => navigateTo("/")} className="text-xs mb-6 hover:underline" style={{ color: "var(--ink-soft)" }}>
-            &larr; Bosh sahifaga qaytish
+            {t("back_to_home")}
           </button>
 
           <div className="crown-divider mb-8">
             <hr className="hairline" />
-            <span className="font-display text-xl md:text-2xl tracking-wide">Barcha mahsulotlar</span>
+            <span className="font-display text-xl md:text-2xl tracking-wide">{t("all_products_title")}</span>
             <hr className="hairline" />
           </div>
 
@@ -1124,9 +1261,9 @@ export default function Sansiro() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Mahsulot qidirish..."
+              placeholder={t("search_placeholder")}
               className="input-line w-full py-2 text-sm text-center"
-              aria-label="Mahsulot qidirish"
+              aria-label={t("search_placeholder")}
             />
           </div>
 
@@ -1137,7 +1274,7 @@ export default function Sansiro() {
                 onClick={() => setActiveCategory(cat)}
                 className={`pill px-3 md:px-4 py-1.5 rounded-full text-xs tracking-wide ${activeCategory === cat ? "active" : ""}`}
               >
-                {cat.toUpperCase()}
+                {catLabel(cat).toUpperCase()}
               </button>
             ))}
           </div>
@@ -1150,7 +1287,7 @@ export default function Sansiro() {
 
           {filteredProducts.length === 0 ? (
             <p className="text-center text-sm py-10" style={{ color: "var(--ink-soft)" }}>
-              Hech narsa topilmadi. Boshqa kalit so'z yoki kategoriya bilan urinib ko'ring.
+              {t("no_results")}
             </p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
@@ -1174,13 +1311,13 @@ export default function Sansiro() {
           EST. 2024 &bull; LUXURY CLOTHING
         </p>
         <p className="font-display italic text-base md:text-xl mt-8 max-w-xl mx-auto px-2" style={{ color: "var(--ink)" }}>
-          Cheklangan seriyadagi, qo'lda ishlangan hashamatli kiyimlar
+          {t("hero_tagline")}
         </p>
         <button
           onClick={() => catalogRef.current?.scrollIntoView({ behavior: "smooth" })}
           className="btn-ink font-mono text-xs tracking-wider px-8 py-3 mt-10"
         >
-          KATALOGNI KO'RISH
+          {t("hero_cta")}
         </button>
       </header>
 
@@ -1215,7 +1352,7 @@ export default function Sansiro() {
         {products.length > HOME_PRODUCT_LIMIT && (
           <div className="text-center mt-10">
             <button onClick={() => navigateTo("/katalog")} className="btn-ghost px-8 py-3 text-xs tracking-wider">
-              BARCHASINI KO'RISH ({products.length})
+              {t("see_all")} ({products.length})
             </button>
           </div>
         )}
@@ -1244,7 +1381,7 @@ export default function Sansiro() {
       <section id="aloqa" className="px-5 md:px-12 py-16 md:py-20">
         <div className="crown-divider mb-10">
           <hr className="hairline" />
-          <span className="font-display text-xl md:text-2xl tracking-wide">Aloqa</span>
+          <span className="font-display text-xl md:text-2xl tracking-wide">{t("contact_title")}</span>
           <hr className="hairline" />
         </div>
 
@@ -1278,7 +1415,7 @@ export default function Sansiro() {
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-1" style={{ color: "var(--ink-soft)" }}>TELEFON</div>
-                <div className="font-mono">+998 95 818 70 30</div>
+                <div className="font-mono">+998 90 000 00 00</div>
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-2" style={{ color: "var(--ink-soft)" }}>IJTIMOIY TARMOQLAR</div>
@@ -1370,14 +1507,14 @@ export default function Sansiro() {
         </div>
         <div className="flex justify-center gap-6 mt-5 text-xs" style={{ color: "var(--ink-soft)" }}>
           <button onClick={() => setPolicyView("return")} className="hover:underline">
-            Qaytarish siyosati
+            {t("return_policy")}
           </button>
           <button onClick={() => setPolicyView("privacy")} className="hover:underline">
-            Maxfiylik siyosati
+            {t("privacy_policy")}
           </button>
         </div>
         <p className="font-mono text-xs mt-4" style={{ color: "var(--ink-soft)" }}>
-          &copy; 2026 SANSIRO. Barcha huquqlar himoyalangan.
+          &copy; 2026 SANSIRO. {t("all_rights")}
         </p>
       </footer>
 
@@ -1430,9 +1567,9 @@ export default function Sansiro() {
       <div className={`drawer ${panel === "cart" ? "open" : ""}`}>
         <div className="flex items-center justify-between p-5" style={{ borderBottom: "1px solid var(--line)" }}>
           <span className="font-display text-lg">
-            {checkoutStep === "cart" && "Savat"}
-            {checkoutStep === "form" && "Buyurtma ma'lumotlari"}
-            {checkoutStep === "confirmed" && "Buyurtma qabul qilindi"}
+            {checkoutStep === "cart" && t("cart")}
+            {checkoutStep === "form" && t("order_details")}
+            {checkoutStep === "confirmed" && t("order_confirmed")}
           </span>
           <button onClick={() => setPanel("none")} aria-label="Yopish" className="text-lg">&times;</button>
         </div>
@@ -1441,7 +1578,7 @@ export default function Sansiro() {
           {checkoutStep === "cart" && (
             cart.length === 0 ? (
               <p className="text-sm text-center mt-10" style={{ color: "var(--ink-soft)" }}>
-                Savatingiz bo'sh. Katalogdan mahsulot tanlang.
+                {t("cart_empty")}
               </p>
             ) : (
               <div className="flex flex-col gap-4">
@@ -1457,7 +1594,7 @@ export default function Sansiro() {
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{c.name}</div>
                       <div className="text-xs mt-0.5" style={{ color: "var(--ink-soft)" }}>
-                        O'lcham: {c.size}{c.color ? ` \u00b7 Rang: ${c.color}` : ""}
+                        {t("size_word")}: {c.size}{c.color ? ` \u00b7 ${t("color_word")}: ${c.color}` : ""}
                       </div>
                       <div className="flex items-center gap-3 mt-2">
                         <button onClick={() => updateQty(c.productId, c.size, c.color, -1)} className="btn-ghost w-6 h-6 text-xs flex items-center justify-center">-</button>
@@ -1468,7 +1605,7 @@ export default function Sansiro() {
                     <div className="text-right flex-shrink-0">
                       <div className="font-mono text-sm">{money(c.price * c.qty)}</div>
                       <button onClick={() => removeItem(c.productId, c.size, c.color)} className="text-xs mt-2" style={{ color: "var(--ink-soft)" }}>
-                        O'chirish
+                        {t("remove")}
                       </button>
                     </div>
                   </div>
@@ -1480,7 +1617,7 @@ export default function Sansiro() {
           {checkoutStep === "form" && (
             <form onSubmit={submitOrder} className="flex flex-col gap-5">
               <div>
-                <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>Ism familiya</label>
+                <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>{t("checkout_name")}</label>
                 <input
                   className="input-line py-2 text-sm"
                   value={orderForm.name}
@@ -1488,7 +1625,7 @@ export default function Sansiro() {
                 />
               </div>
               <div>
-                <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>Telefon raqam</label>
+                <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>{t("checkout_phone")}</label>
                 <input
                   className="input-line py-2 text-sm font-mono"
                   placeholder="+998 90 123 45 67"
@@ -1497,7 +1634,7 @@ export default function Sansiro() {
                 />
               </div>
               <div>
-                <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>Yetkazib berish manzili</label>
+                <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>{t("checkout_address")}</label>
                 <input
                   className="input-line py-2 text-sm"
                   value={orderForm.address}
@@ -1505,7 +1642,7 @@ export default function Sansiro() {
                 />
               </div>
               <div>
-                <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>Izoh (ixtiyoriy)</label>
+                <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>{t("checkout_notes")}</label>
                 <input
                   className="input-line py-2 text-sm"
                   value={orderForm.notes}
@@ -1514,10 +1651,10 @@ export default function Sansiro() {
               </div>
               {orderError && <p className="text-xs" style={{ color: "var(--danger)" }}>{orderError}</p>}
               <button type="submit" className="btn-ink py-3 text-sm tracking-wide mt-2">
-                BUYURTMANI TASDIQLASH
+                {t("confirm_order")}
               </button>
               <button type="button" onClick={() => setCheckoutStep("cart")} className="btn-ghost py-3 text-sm tracking-wide">
-                ORQAGA
+                {t("back")}
               </button>
             </form>
           )}
@@ -1525,18 +1662,18 @@ export default function Sansiro() {
           {checkoutStep === "confirmed" && (
             <div className="text-center mt-10 fade-in">
               <Crown size={28} />
-              <p className="font-display text-xl mt-4">Rahmat, {orderForm.name.split(" ")[0]}!</p>
+              <p className="font-display text-xl mt-4">{t("thank_you")}, {orderForm.name.split(" ")[0]}!</p>
               <p className="text-sm mt-3" style={{ color: "var(--ink-soft)" }}>
-                Buyurtmangiz raqami: <span className="font-mono">{lastOrderNumber}</span>
+                {t("order_number_label")} <span className="font-mono">{lastOrderNumber}</span>
               </p>
               <p className="text-sm mt-3" style={{ color: "var(--ink-soft)" }}>
-                Tez orada operatorimiz {orderForm.phone} raqamiga qo'ng'iroq qilib, buyurtmani tasdiqlaydi.
+                {t("will_call")}
               </p>
               <button
                 onClick={() => { setPanel("none"); setCheckoutStep("cart"); setOrderForm({ name: "", phone: "", address: "", notes: "" }); }}
                 className="btn-ink px-8 py-3 text-sm tracking-wide mt-8"
               >
-                YOPISH
+                {t("close")}
               </button>
             </div>
           )}
@@ -1545,11 +1682,11 @@ export default function Sansiro() {
         {checkoutStep === "cart" && cart.length > 0 && (
           <div className="p-5" style={{ borderTop: "1px solid var(--line)" }}>
             <div className="flex justify-between text-sm mb-4">
-              <span style={{ color: "var(--ink-soft)" }}>Jami</span>
+              <span style={{ color: "var(--ink-soft)" }}>{t("total")}</span>
               <span className="font-mono">{money(subtotal)}</span>
             </div>
             <button onClick={goToCheckoutForm} className="btn-ink w-full py-3 text-sm tracking-wide">
-              BUYURTMA BERISH
+              {t("place_order")}
             </button>
           </div>
         )}
@@ -1559,7 +1696,7 @@ export default function Sansiro() {
       <div className={`drawer ${panel === "auth" ? "open" : ""}`}>
         <div className="flex items-center justify-between p-5" style={{ borderBottom: "1px solid var(--line)" }}>
           <span className="font-display text-lg">
-            {profile ? "Hisobim" : "Kirish / Ro'yxatdan o'tish"}
+            {profile ? t("account_title") : t("login_register_title")}
           </span>
           <button onClick={() => setPanel("none")} aria-label="Yopish" className="text-lg">&times;</button>
         </div>
@@ -1588,10 +1725,10 @@ export default function Sansiro() {
                 onClick={() => { setPanel("orders"); loadMyOrders(); }}
                 className="btn-ink w-full py-3 text-sm tracking-wide mb-3"
               >
-                MENING BUYURTMALARIM
+                {t("my_orders")}
               </button>
               <button onClick={logout} className="btn-ghost w-full py-3 text-sm tracking-wide">
-                CHIQISH
+                {t("logout")}
               </button>
             </div>
           ) : authStep === "phone" ? (
@@ -1652,7 +1789,7 @@ export default function Sansiro() {
       {/* Wishlist drawer */}
       <div className={`drawer ${panel === "wishlist" ? "open" : ""}`}>
         <div className="flex items-center justify-between p-5" style={{ borderBottom: "1px solid var(--line)" }}>
-          <span className="font-display text-lg">Sevimlilar</span>
+          <span className="font-display text-lg">{t("wishlist_label")}</span>
           <button onClick={() => setPanel("none")} aria-label="Yopish" className="text-lg">&times;</button>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
@@ -1696,7 +1833,7 @@ export default function Sansiro() {
       {/* Order history drawer */}
       <div className={`drawer ${panel === "orders" ? "open" : ""}`}>
         <div className="flex items-center justify-between p-5" style={{ borderBottom: "1px solid var(--line)" }}>
-          <span className="font-display text-lg">Mening buyurtmalarim</span>
+          <span className="font-display text-lg">{t("my_orders")}</span>
           <button onClick={() => setPanel("none")} aria-label="Yopish" className="text-lg">&times;</button>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
