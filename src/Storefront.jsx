@@ -1278,7 +1278,7 @@ export default function Sansiro() {
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-1" style={{ color: "var(--ink-soft)" }}>TELEFON</div>
-                <div className="font-mono">+998 90 000 00 00</div>
+                <div className="font-mono">+998 95 818 70 30</div>
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-2" style={{ color: "var(--ink-soft)" }}>IJTIMOIY TARMOQLAR</div>
