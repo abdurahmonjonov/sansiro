@@ -449,7 +449,51 @@ export default function Sansiro() {
     window.storage.set(CART_KEY, JSON.stringify(cart), false).catch(() => {});
   }, [cart, cartLoaded]);
 
-  const openProduct = (product) => {
+  const [currentPath, setCurrentPath] = useState(() =>
+    typeof window !== "undefined" ? window.location.pathname : "/"
+  );
+
+  useEffect(() => {
+    const onPopState = () => setCurrentPath(window.location.pathname);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const navigateTo = (path) => {
+    window.history.pushState(null, "", path);
+    setCurrentPath(path);
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  };
+
+  const goToProduct = (product) => navigateTo(`/product/${product.id}`);
+
+  const scrollToSection = (idOrRef) => {
+    const doScroll = () => {
+      if (idOrRef === "catalog") {
+        catalogRef.current?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        document.getElementById(idOrRef)?.scrollIntoView({ behavior: "smooth" });
+      }
+    };
+    if (currentPath !== "/") {
+      navigateTo("/");
+      setTimeout(doScroll, 80);
+    } else {
+      doScroll();
+    }
+  };
+
+  useEffect(() => {
+    if (!currentPath.startsWith("/product/")) {
+      setSelectedProduct(null);
+      return;
+    }
+    const id = currentPath.replace("/product/", "");
+    const product = products.find((p) => p.id === id);
+    if (!product) {
+      setSelectedProduct(null);
+      return;
+    }
     setSelectedProduct(product);
     setSelectedSize(product.sizes[0]);
     setSelectedColor(product.colors && product.colors.length > 0 ? product.colors[0] : null);
@@ -457,7 +501,11 @@ export default function Sansiro() {
     setReviewForm({ name: "", rating: 5, comment: "" });
     setReviewError(null);
     loadReviews(product.id);
-  };
+  }, [currentPath, products]);
+
+  useEffect(() => {
+    document.title = selectedProduct ? `${selectedProduct.name} — SANSIRO` : "SANSIRO — Hashamatli kiyimlar";
+  }, [selectedProduct]);
 
   const loadReviews = async (productId) => {
     setReviewsLoading(true);
@@ -726,6 +774,46 @@ export default function Sansiro() {
     .filter((p) => activeCategory === "Barchasi" || p.category === activeCategory)
     .filter((p) => p.name.toLowerCase().includes(searchQuery.trim().toLowerCase()));
 
+  const HOME_PRODUCT_LIMIT = 9;
+  const homeProducts = products.slice(0, HOME_PRODUCT_LIMIT);
+
+  const renderProductCard = (p) => (
+    <div
+      key={p.id}
+      onClick={() => goToProduct(p)}
+      onKeyDown={(e) => { if (e.key === "Enter") goToProduct(p); }}
+      role="button"
+      tabIndex={0}
+      className="tag-card text-left fade-in cursor-pointer"
+    >
+      <button
+        onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }}
+        className="absolute z-10"
+        style={{ top: 8, right: 8, color: wishlist.includes(p.id) ? "var(--gold)" : "var(--ink-soft)" }}
+        aria-label="Sevimlilarga qo'shish"
+      >
+        <HeartIcon size={17} filled={wishlist.includes(p.id)} />
+      </button>
+      <div className="swatch aspect-square mx-3 mb-4">
+        {p.image ? (
+          <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <>
+            <div className="swatch-mark">
+              <Crown size={40} color="var(--gold-soft)" />
+            </div>
+            <div className="swatch-watermark">SANSIRO</div>
+          </>
+        )}
+      </div>
+      <div className="px-3 md:px-4 pb-4">
+        <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{p.category}</div>
+        <div className="font-display text-base md:text-lg mt-1">{p.name}</div>
+        <div className="font-mono text-xs md:text-sm mt-2" style={{ color: "var(--gold)" }}>{money(p.price)}</div>
+      </div>
+    </div>
+  );
+
   const wishlistProducts = products.filter((p) => wishlist.includes(p.id));
 
   const submitContactMessage = async (e) => {
@@ -778,18 +866,18 @@ export default function Sansiro() {
             >
               {mobileMenuOpen ? "\u2715" : "\u2630"}
             </button>
-            <div className="flex items-center gap-2">
+            <button onClick={() => navigateTo("/")} className="flex items-center gap-2">
               <Crown size={16} />
               <span className="font-display text-lg md:text-xl tracking-wide">SANSIRO</span>
-            </div>
+            </button>
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm" style={{ color: "var(--ink-soft)" }}>
-            <button onClick={() => catalogRef.current?.scrollIntoView({ behavior: "smooth" })} className="hover:underline">
+            <button onClick={() => scrollToSection("catalog")} className="hover:underline">
               Katalog
             </button>
-            <a href="#haqida" className="hover:underline">Haqida</a>
-            <a href="#aloqa" className="hover:underline">Aloqa</a>
+            <button onClick={() => scrollToSection("haqida")} className="hover:underline">Haqida</button>
+            <button onClick={() => scrollToSection("aloqa")} className="hover:underline">Aloqa</button>
           </div>
 
           <div className="flex items-center gap-4 md:gap-6">
@@ -839,17 +927,239 @@ export default function Sansiro() {
         <div className={`mobile-menu md:hidden ${mobileMenuOpen ? "open" : ""}`}>
           <div className="flex flex-col text-sm px-2 pb-4" style={{ color: "var(--ink-soft)" }}>
             <button
-              onClick={() => { catalogRef.current?.scrollIntoView({ behavior: "smooth" }); setMobileMenuOpen(false); }}
+              onClick={() => { scrollToSection("catalog"); setMobileMenuOpen(false); }}
               className="text-left py-2.5"
             >
               Katalog
             </button>
-            <a href="#haqida" onClick={() => setMobileMenuOpen(false)} className="py-2.5">Haqida</a>
-            <a href="#aloqa" onClick={() => setMobileMenuOpen(false)} className="py-2.5">Aloqa</a>
+            <button onClick={() => { scrollToSection("haqida"); setMobileMenuOpen(false); }} className="text-left py-2.5">Haqida</button>
+            <button onClick={() => { scrollToSection("aloqa"); setMobileMenuOpen(false); }} className="text-left py-2.5">Aloqa</button>
           </div>
         </div>
       </nav>
 
+      {selectedProduct ? (() => {
+        const galleryImages =
+          selectedProduct.images && selectedProduct.images.length > 0
+            ? selectedProduct.images
+            : selectedProduct.image
+            ? [selectedProduct.image]
+            : [];
+        const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : null;
+        return (
+          <section className="px-5 md:px-12 py-8 max-w-4xl mx-auto fade-in">
+            <button onClick={() => scrollToSection("catalog")} className="text-xs mb-6 hover:underline" style={{ color: "var(--ink-soft)" }}>
+              &larr; Katalogga qaytish
+            </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <div className="swatch aspect-square">
+                  {galleryImages.length > 0 ? (
+                    <img
+                      src={galleryImages[selectedImageIndex] || galleryImages[0]}
+                      alt={selectedProduct.name}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div className="swatch-mark"><Crown size={64} color="var(--gold-soft)" /></div>
+                  )}
+                </div>
+                {galleryImages.length > 1 && (
+                  <div className="flex gap-2 mt-3 overflow-x-auto">
+                    {galleryImages.map((img, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedImageIndex(i)}
+                        style={{
+                          width: 56,
+                          height: 56,
+                          flexShrink: 0,
+                          border: i === selectedImageIndex ? "2px solid var(--gold)" : "1px solid var(--line)",
+                        }}
+                      >
+                        <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{selectedProduct.category}</div>
+                <div className="font-display text-2xl md:text-3xl mt-1">{selectedProduct.name}</div>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="font-mono text-lg" style={{ color: "var(--gold)" }}>{money(selectedProduct.price)}</span>
+                  {avgRating && (
+                    <span className="flex items-center gap-1 text-xs" style={{ color: "var(--ink-soft)" }}>
+                      <StarRating value={avgRating} /> ({reviews.length})
+                    </span>
+                  )}
+                </div>
+
+                {selectedProduct.description && (
+                  <p className="text-sm mt-4 leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+                    {selectedProduct.description}
+                  </p>
+                )}
+
+                <div className="mt-5">
+                  <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>O'LCHAM</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedProduct.sizes.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setSelectedSize(s)}
+                        className={`pill px-3 py-1 text-sm ${selectedSize === s ? "active" : ""}`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {selectedProduct.colors && selectedProduct.colors.length > 0 && (
+                  <div className="mt-5">
+                    <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>
+                      RANG{selectedColor ? `: ${selectedColor}` : ""}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedProduct.colors.map((c) => {
+                        const hex = colorToHex(c);
+                        return (
+                          <button
+                            key={c}
+                            onClick={() => setSelectedColor(c)}
+                            title={c}
+                            aria-label={c}
+                            className={`pill px-3 py-1 text-sm flex items-center gap-2 ${selectedColor === c ? "active" : ""}`}
+                          >
+                            {hex && (
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  width: 12,
+                                  height: 12,
+                                  borderRadius: "50%",
+                                  background: hex,
+                                  border: "1px solid var(--line)",
+                                }}
+                              />
+                            )}
+                            {c}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <button onClick={addToCart} className="btn-ink w-full py-3 text-sm tracking-wide mt-8">
+                  SAVATGA QO'SHISH
+                </button>
+
+                <div className="mt-10 pt-6" style={{ borderTop: "1px solid var(--line)" }}>
+                  <div className="font-display text-lg mb-4">Mijozlar sharhlari</div>
+
+                  {reviewsLoading ? (
+                    <p className="text-xs" style={{ color: "var(--ink-soft)" }}>Yuklanmoqda...</p>
+                  ) : reviews.length === 0 ? (
+                    <p className="text-xs mb-4" style={{ color: "var(--ink-soft)" }}>Hali sharh yo'q. Birinchi bo'lib fikr bildiring.</p>
+                  ) : (
+                    <div className="flex flex-col gap-4 mb-6">
+                      {reviews.map((r) => (
+                        <div key={r.id} className="text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{r.name}</span>
+                            <StarRating value={r.rating} size={12} />
+                          </div>
+                          <p className="mt-1" style={{ color: "var(--ink-soft)" }}>{r.comment}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <form onSubmit={submitReview} className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Bahoingiz:</span>
+                      <StarPicker value={reviewForm.rating} onChange={(n) => setReviewForm({ ...reviewForm, rating: n })} />
+                    </div>
+                    <input
+                      className="input-line py-2 text-sm"
+                      placeholder="Ismingiz"
+                      value={reviewForm.name}
+                      onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
+                    />
+                    <textarea
+                      className="input-line py-2 text-sm w-full"
+                      rows={3}
+                      placeholder="Fikringizni yozing..."
+                      value={reviewForm.comment}
+                      onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                    />
+                    {reviewError && <p className="text-xs" style={{ color: "var(--danger)" }}>{reviewError}</p>}
+                    <button type="submit" disabled={reviewSubmitting} className="btn-ghost py-2 text-xs tracking-wide self-start px-5">
+                      {reviewSubmitting ? "YUBORILMOQDA..." : "SHARH QOLDIRISH"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })() : currentPath === "/katalog" ? (
+        <section className="px-4 md:px-12 py-10 max-w-5xl mx-auto fade-in">
+          <button onClick={() => navigateTo("/")} className="text-xs mb-6 hover:underline" style={{ color: "var(--ink-soft)" }}>
+            &larr; Bosh sahifaga qaytish
+          </button>
+
+          <div className="crown-divider mb-8">
+            <hr className="hairline" />
+            <span className="font-display text-xl md:text-2xl tracking-wide">Barcha mahsulotlar</span>
+            <hr className="hairline" />
+          </div>
+
+          <div className="max-w-sm mx-auto mb-6 px-1">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Mahsulot qidirish..."
+              className="input-line w-full py-2 text-sm text-center"
+              aria-label="Mahsulot qidirish"
+            />
+          </div>
+
+          <div className="flex justify-center gap-2 md:gap-3 mb-10 flex-wrap px-1">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`pill px-3 md:px-4 py-1.5 rounded-full text-xs tracking-wide ${activeCategory === cat ? "active" : ""}`}
+              >
+                {cat.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          {searchQuery.trim() && (
+            <p className="text-center text-xs mb-6" style={{ color: "var(--ink-soft)" }}>
+              "{searchQuery}" bo'yicha {filteredProducts.length} ta natija topildi
+            </p>
+          )}
+
+          {filteredProducts.length === 0 ? (
+            <p className="text-center text-sm py-10" style={{ color: "var(--ink-soft)" }}>
+              Hech narsa topilmadi. Boshqa kalit so'z yoki kategoriya bilan urinib ko'ring.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+              {filteredProducts.map(renderProductCard)}
+            </div>
+          )}
+        </section>
+      ) : (
+      <>
       {/* Hero */}
       <header className="text-center px-5 py-16 md:py-28">
         <div className="crown-divider mb-4">
@@ -898,78 +1208,16 @@ export default function Sansiro() {
           <hr className="hairline" />
         </div>
 
-        <div className="max-w-sm mx-auto mb-6 px-1">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Mahsulot qidirish..."
-            className="input-line w-full py-2 text-sm text-center"
-            aria-label="Mahsulot qidirish"
-          />
-        </div>
-
-        <div className="flex justify-center gap-2 md:gap-3 mb-10 flex-wrap px-1">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`pill px-3 md:px-4 py-1.5 rounded-full text-xs tracking-wide ${activeCategory === cat ? "active" : ""}`}
-            >
-              {cat.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        {searchQuery.trim() && (
-          <p className="text-center text-xs mb-6" style={{ color: "var(--ink-soft)" }}>
-            "{searchQuery}" bo'yicha {filteredProducts.length} ta natija topildi
-          </p>
-        )}
-
-        {filteredProducts.length === 0 ? (
-          <p className="text-center text-sm py-10" style={{ color: "var(--ink-soft)" }}>
-            Hech narsa topilmadi. Boshqa kalit so'z yoki kategoriya bilan urinib ko'ring.
-          </p>
-        ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
-          {filteredProducts.map((p) => (
-            <div
-              key={p.id}
-              onClick={() => openProduct(p)}
-              onKeyDown={(e) => { if (e.key === "Enter") openProduct(p); }}
-              role="button"
-              tabIndex={0}
-              className="tag-card text-left fade-in cursor-pointer"
-            >
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }}
-                className="absolute z-10"
-                style={{ top: 8, right: 8, color: wishlist.includes(p.id) ? "var(--gold)" : "var(--ink-soft)" }}
-                aria-label="Sevimlilarga qo'shish"
-              >
-                <HeartIcon size={17} filled={wishlist.includes(p.id)} />
-              </button>
-              <div className="swatch aspect-square mx-3 mb-4">
-                {p.image ? (
-                  <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <>
-                    <div className="swatch-mark">
-                      <Crown size={40} color="var(--gold-soft)" />
-                    </div>
-                    <div className="swatch-watermark">SANSIRO</div>
-                  </>
-                )}
-              </div>
-              <div className="px-3 md:px-4 pb-4">
-                <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{p.category}</div>
-                <div className="font-display text-base md:text-lg mt-1">{p.name}</div>
-                <div className="font-mono text-xs md:text-sm mt-2" style={{ color: "var(--gold)" }}>{money(p.price)}</div>
-              </div>
-            </div>
-          ))}
+          {homeProducts.map(renderProductCard)}
         </div>
+
+        {products.length > HOME_PRODUCT_LIMIT && (
+          <div className="text-center mt-10">
+            <button onClick={() => navigateTo("/katalog")} className="btn-ghost px-8 py-3 text-xs tracking-wider">
+              BARCHASINI KO'RISH ({products.length})
+            </button>
+          </div>
         )}
       </section>
 
@@ -1030,7 +1278,7 @@ export default function Sansiro() {
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-1" style={{ color: "var(--ink-soft)" }}>TELEFON</div>
-                <div className="font-mono">+998 95 818 70 30</div>
+                <div className="font-mono">+998 90 000 00 00</div>
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-2" style={{ color: "var(--ink-soft)" }}>IJTIMOIY TARMOQLAR</div>
@@ -1106,6 +1354,8 @@ export default function Sansiro() {
           </div>
         </div>
       </section>
+      </>
+      )}
 
       {/* Footer */}
       <footer className="px-5 md:px-12 py-10 text-center" style={{ borderTop: "1px solid var(--line)" }}>
@@ -1172,180 +1422,6 @@ export default function Sansiro() {
           </div>
         </div>
       )}
-
-      {/* Product quick view modal */}
-      {selectedProduct && (() => {
-        const galleryImages =
-          selectedProduct.images && selectedProduct.images.length > 0
-            ? selectedProduct.images
-            : selectedProduct.image
-            ? [selectedProduct.image]
-            : [];
-        const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : null;
-        return (
-          <div className="modal-backdrop" onClick={() => setSelectedProduct(null)}>
-            <div
-              className="fade-in max-w-lg w-full overflow-y-auto"
-              style={{ background: "var(--paper)", border: "1px solid var(--line)", maxHeight: "90vh" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="swatch aspect-video">
-                {galleryImages.length > 0 ? (
-                  <img
-                    src={galleryImages[selectedImageIndex] || galleryImages[0]}
-                    alt={selectedProduct.name}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                ) : (
-                  <div className="swatch-mark"><Crown size={56} color="var(--gold-soft)" /></div>
-                )}
-              </div>
-              {galleryImages.length > 1 && (
-                <div className="flex gap-2 p-3 overflow-x-auto" style={{ borderBottom: "1px solid var(--line)" }}>
-                  {galleryImages.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedImageIndex(i)}
-                      style={{
-                        width: 48,
-                        height: 48,
-                        flexShrink: 0,
-                        border: i === selectedImageIndex ? "2px solid var(--gold)" : "1px solid var(--line)",
-                      }}
-                    >
-                      <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className="p-5 md:p-6">
-                <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{selectedProduct.category}</div>
-                <div className="font-display text-xl md:text-2xl mt-1">{selectedProduct.name}</div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="font-mono text-base" style={{ color: "var(--gold)" }}>{money(selectedProduct.price)}</span>
-                  {avgRating && (
-                    <span className="flex items-center gap-1 text-xs" style={{ color: "var(--ink-soft)" }}>
-                      <StarRating value={avgRating} /> ({reviews.length})
-                    </span>
-                  )}
-                </div>
-
-                {selectedProduct.description && (
-                  <p className="text-sm mt-4 leading-relaxed" style={{ color: "var(--ink-soft)" }}>
-                    {selectedProduct.description}
-                  </p>
-                )}
-
-                <div className="mt-5">
-                  <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>O'LCHAM</div>
-                  <div className="flex gap-2 flex-wrap">
-                    {selectedProduct.sizes.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setSelectedSize(s)}
-                        className={`pill px-3 py-1 text-sm ${selectedSize === s ? "active" : ""}`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {selectedProduct.colors && selectedProduct.colors.length > 0 && (
-                  <div className="mt-5">
-                    <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>
-                      RANG{selectedColor ? `: ${selectedColor}` : ""}
-                    </div>
-                    <div className="flex gap-2 flex-wrap">
-                      {selectedProduct.colors.map((c) => {
-                        const hex = colorToHex(c);
-                        return (
-                          <button
-                            key={c}
-                            onClick={() => setSelectedColor(c)}
-                            title={c}
-                            aria-label={c}
-                            className={`pill px-3 py-1 text-sm flex items-center gap-2 ${selectedColor === c ? "active" : ""}`}
-                          >
-                            {hex && (
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  width: 12,
-                                  height: 12,
-                                  borderRadius: "50%",
-                                  background: hex,
-                                  border: "1px solid var(--line)",
-                                }}
-                              />
-                            )}
-                            {c}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-3 mt-8">
-                  <button onClick={() => setSelectedProduct(null)} className="btn-ghost flex-1 py-3 text-xs md:text-sm tracking-wide">
-                    BEKOR QILISH
-                  </button>
-                  <button onClick={addToCart} className="btn-ink flex-1 py-3 text-xs md:text-sm tracking-wide">
-                    SAVATGA QO'SHISH
-                  </button>
-                </div>
-
-                <div className="mt-8 pt-6" style={{ borderTop: "1px solid var(--line)" }}>
-                  <div className="font-display text-lg mb-4">Mijozlar sharhlari</div>
-
-                  {reviewsLoading ? (
-                    <p className="text-xs" style={{ color: "var(--ink-soft)" }}>Yuklanmoqda...</p>
-                  ) : reviews.length === 0 ? (
-                    <p className="text-xs mb-4" style={{ color: "var(--ink-soft)" }}>Hali sharh yo'q. Birinchi bo'lib fikr bildiring.</p>
-                  ) : (
-                    <div className="flex flex-col gap-4 mb-6">
-                      {reviews.map((r) => (
-                        <div key={r.id} className="text-sm">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{r.name}</span>
-                            <StarRating value={r.rating} size={12} />
-                          </div>
-                          <p className="mt-1" style={{ color: "var(--ink-soft)" }}>{r.comment}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <form onSubmit={submitReview} className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs" style={{ color: "var(--ink-soft)" }}>Bahoingiz:</span>
-                      <StarPicker value={reviewForm.rating} onChange={(n) => setReviewForm({ ...reviewForm, rating: n })} />
-                    </div>
-                    <input
-                      className="input-line py-2 text-sm"
-                      placeholder="Ismingiz"
-                      value={reviewForm.name}
-                      onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
-                    />
-                    <textarea
-                      className="input-line py-2 text-sm w-full"
-                      rows={3}
-                      placeholder="Fikringizni yozing..."
-                      value={reviewForm.comment}
-                      onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                    />
-                    {reviewError && <p className="text-xs" style={{ color: "var(--danger)" }}>{reviewError}</p>}
-                    <button type="submit" disabled={reviewSubmitting} className="btn-ghost py-2 text-xs tracking-wide self-start px-5">
-                      {reviewSubmitting ? "YUBORILMOQDA..." : "SHARH QOLDIRISH"}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Scrim shared by cart + auth drawers */}
       <div className={`scrim ${panel !== "none" ? "open" : ""}`} onClick={() => setPanel("none")} />
@@ -1601,7 +1677,7 @@ export default function Sansiro() {
                   </div>
                   <div className="flex flex-col gap-2 items-end flex-shrink-0">
                     <button
-                      onClick={() => { setPanel("none"); openProduct(p); }}
+                      onClick={() => { setPanel("none"); goToProduct(p); }}
                       className="btn-ghost px-3 py-1 text-xs"
                     >
                       KO'RISH
