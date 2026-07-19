@@ -361,8 +361,8 @@ export default function Sansiro() {
   const [authPhone, setAuthPhone] = useState("");
   const [authName, setAuthName] = useState("");
   const [authCodeInput, setAuthCodeInput] = useState("");
-  const [generatedCode, setGeneratedCode] = useState(null);
   const [authError, setAuthError] = useState(null);
+  const [authSending, setAuthSending] = useState(false);
 
   // Search, wishlist, and order-history state
   const [searchQuery, setSearchQuery] = useState("");
@@ -576,7 +576,10 @@ export default function Sansiro() {
 
   const normalizePhone = (v) => v.replace(/[^0-9+]/g, "");
 
-  const sendCode = (e) => {
+  const AUTH_FUNCTION_URL = "https://bhecsyaxlonixnguqlqw.supabase.co/functions/v1/telegram-auth";
+  const BOT_USERNAME = "sansirouzbot"; // agar bot username boshqacha bo'lsa, shu yerni to'g'irlang
+
+  const sendCode = async (e) => {
     e.preventDefault();
     const digits = authPhone.replace(/[^0-9]/g, "");
     if (digits.length < 9) {
@@ -584,30 +587,65 @@ export default function Sansiro() {
       return;
     }
     setAuthError(null);
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-    setGeneratedCode(code);
-    setAuthStep("verify");
+    setAuthSending(true);
+    try {
+      const res = await fetch(AUTH_FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send", phone: digits }),
+      });
+      const data = await res.json();
+      if (!data.ok && data.reason === "not_linked") {
+        setAuthError(
+          `Bu raqam hali Telegram botga ulanmagan. Avval @${BOT_USERNAME} botni oching, "Start" bosing va telefon raqamingizni ulashing, so'ng qayta urinib ko'ring.`
+        );
+        return;
+      }
+      if (!data.ok) {
+        setAuthError("Kod yuborishda xatolik yuz berdi. Qayta urinib ko'ring.");
+        return;
+      }
+      setAuthStep("verify");
+    } catch (err) {
+      setAuthError("Server bilan bog'lanishda xatolik yuz berdi.");
+    } finally {
+      setAuthSending(false);
+    }
   };
 
   const verifyCode = async (e) => {
     e.preventDefault();
-    if (authCodeInput.trim() !== generatedCode) {
-      setAuthError("Kod noto'g'ri. Qaytadan urinib ko'ring.");
-      return;
-    }
     if (!profile && !authName.trim()) {
       setAuthError("Ismingizni kiriting.");
       return;
     }
-    const newProfile = { phone: authPhone, name: profile ? profile.name : authName.trim() };
     setAuthError(null);
-    setProfile(newProfile);
+    setAuthSending(true);
     try {
-      await window.storage.set(PROFILE_KEY, JSON.stringify(newProfile), false);
+      const digits = authPhone.replace(/[^0-9]/g, "");
+      const res = await fetch(AUTH_FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify", phone: digits, code: authCodeInput.trim() }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setAuthError("Kod noto'g'ri yoki muddati o'tgan. Qaytadan urinib ko'ring.");
+        return;
+      }
+      const newProfile = { phone: authPhone, name: profile ? profile.name : authName.trim() };
+      setProfile(newProfile);
+      try {
+        await window.storage.set(PROFILE_KEY, JSON.stringify(newProfile), false);
+      } catch (err) {
+        // profile still works for this session even if it couldn't be saved for next time
+      }
+      setAuthStep("success");
     } catch (err) {
-      // profile still works for this session even if it couldn't be saved for next time
+      setAuthError("Server bilan bog'lanishda xatolik yuz berdi.");
+    } finally {
+      setAuthSending(false);
     }
-    setAuthStep("success");
   };
 
   useEffect(() => {
@@ -618,7 +656,6 @@ export default function Sansiro() {
       setAuthPhone("");
       setAuthCodeInput("");
       setAuthName("");
-      setGeneratedCode(null);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }, 1400);
     return () => clearTimeout(timer);
@@ -951,7 +988,7 @@ export default function Sansiro() {
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-1" style={{ color: "var(--ink-soft)" }}>TELEFON</div>
-                <div className="font-mono">+998 95 818 70 30</div>
+                <div className="font-mono">+998 90 000 00 00</div>
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-2" style={{ color: "var(--ink-soft)" }}>IJTIMOIY TARMOQLAR</div>
@@ -1416,18 +1453,15 @@ export default function Sansiro() {
                 />
               </div>
               {authError && <p className="text-xs" style={{ color: "var(--danger)" }}>{authError}</p>}
-              <button type="submit" className="btn-ink py-3 text-sm tracking-wide">
-                KODNI YUBORISH
+              <button type="submit" disabled={authSending} className="btn-ink py-3 text-sm tracking-wide">
+                {authSending ? "YUBORILMOQDA..." : "KODNI YUBORISH"}
               </button>
             </form>
           ) : (
             <form onSubmit={verifyCode} className="flex flex-col gap-5 fade-in">
               <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-                {authPhone} raqamiga yuborilgan 4 xonali kodni kiriting.
+                Telegram botimizga yuborilgan 4 xonali kodni kiriting.
               </p>
-              <div className="code-note text-xs px-3 py-2">
-                Demo rejimi: haqiqiy SMS xizmati hali ulanmagan, shuning uchun kodni shu yerda ko'rsatamiz — <span className="font-mono">{generatedCode}</span>
-              </div>
               <div>
                 <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>Tasdiqlash kodi</label>
                 <input
@@ -1448,8 +1482,8 @@ export default function Sansiro() {
                 </div>
               )}
               {authError && <p className="text-xs" style={{ color: "var(--danger)" }}>{authError}</p>}
-              <button type="submit" className="btn-ink py-3 text-sm tracking-wide">
-                TASDIQLASH
+              <button type="submit" disabled={authSending} className="btn-ink py-3 text-sm tracking-wide">
+                {authSending ? "TEKSHIRILMOQDA..." : "TASDIQLASH"}
               </button>
               <button type="button" onClick={() => { setAuthStep("phone"); setAuthError(null); }} className="btn-ghost py-3 text-sm tracking-wide">
                 ORQAGA
