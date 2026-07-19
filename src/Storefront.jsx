@@ -310,6 +310,17 @@ const SOCIAL_LINKS = {
 
 const CATEGORIES = ["Barchasi", "Ayollar", "Erkaklar", "Aksessuar"];
 
+const COLOR_HEX = {
+  "qora": "#1A1A1A", "oq": "#F5F5F5", "kulrang": "#9B9B9B", "kul rang": "#9B9B9B",
+  "qizil": "#B23A48", "ko'k": "#3B5C8E", "kok": "#3B5C8E", "havorang": "#7FA8C9",
+  "yashil": "#4A7A5E", "sariq": "#D9B54A", "jigarrang": "#6B4A34", "bej": "#D9CBB0",
+  "pushti": "#D89AAE", "binafsha": "#7A5C8E", "kumush": "#C4C4C4", "oltin": "#B8862F",
+  "to'q ko'k": "#1F3A5F", "krem": "#E9E1CC", "shokolod": "#4A3423",
+};
+function colorToHex(name) {
+  return COLOR_HEX[(name || "").trim().toLowerCase()] || null;
+}
+
 const PRODUCTS = [
   { id: "p1", name: "Ipak ko'ylak", category: "Ayollar", price: 1450000, sizes: ["XS", "S", "M", "L"] },
   { id: "p2", name: "Yun palto", category: "Ayollar", price: 3200000, sizes: ["S", "M", "L"] },
@@ -342,6 +353,7 @@ export default function Sansiro() {
   const [activeCategory, setActiveCategory] = useState("Barchasi");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
@@ -440,6 +452,7 @@ export default function Sansiro() {
   const openProduct = (product) => {
     setSelectedProduct(product);
     setSelectedSize(product.sizes[0]);
+    setSelectedColor(product.colors && product.colors.length > 0 ? product.colors[0] : null);
     setSelectedImageIndex(0);
     setReviewForm({ name: "", rating: 5, comment: "" });
     setReviewError(null);
@@ -493,7 +506,7 @@ export default function Sansiro() {
     if (!selectedProduct || !selectedSize) return;
     setCart((current) => {
       const existing = current.find(
-        (c) => c.productId === selectedProduct.id && c.size === selectedSize
+        (c) => c.productId === selectedProduct.id && c.size === selectedSize && c.color === selectedColor
       );
       if (existing) {
         return current.map((c) =>
@@ -507,6 +520,7 @@ export default function Sansiro() {
           name: selectedProduct.name,
           price: selectedProduct.price,
           size: selectedSize,
+          color: selectedColor,
           qty: 1,
           image: (selectedProduct.images && selectedProduct.images[0]) || selectedProduct.image || null,
         },
@@ -517,11 +531,11 @@ export default function Sansiro() {
     setCheckoutStep("cart");
   };
 
-  const updateQty = (productId, size, delta) => {
+  const updateQty = (productId, size, color, delta) => {
     setCart((current) =>
       current
         .map((c) =>
-          c.productId === productId && c.size === size
+          c.productId === productId && c.size === size && c.color === color
             ? { ...c, qty: c.qty + delta }
             : c
         )
@@ -529,8 +543,8 @@ export default function Sansiro() {
     );
   };
 
-  const removeItem = (productId, size) => {
-    setCart((current) => current.filter((c) => !(c.productId === productId && c.size === size)));
+  const removeItem = (productId, size, color) => {
+    setCart((current) => current.filter((c) => !(c.productId === productId && c.size === size && c.color === color)));
   };
 
   const subtotal = useMemo(() => cart.reduce((s, c) => s + c.price * c.qty, 0), [cart]);
@@ -1209,6 +1223,42 @@ export default function Sansiro() {
                   </div>
                 </div>
 
+                {selectedProduct.colors && selectedProduct.colors.length > 0 && (
+                  <div className="mt-5">
+                    <div className="text-xs mb-2 tracking-wide" style={{ color: "var(--ink-soft)" }}>
+                      RANG{selectedColor ? `: ${selectedColor}` : ""}
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedProduct.colors.map((c) => {
+                        const hex = colorToHex(c);
+                        return (
+                          <button
+                            key={c}
+                            onClick={() => setSelectedColor(c)}
+                            title={c}
+                            aria-label={c}
+                            className={`pill px-3 py-1 text-sm flex items-center gap-2 ${selectedColor === c ? "active" : ""}`}
+                          >
+                            {hex && (
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  width: 12,
+                                  height: 12,
+                                  borderRadius: "50%",
+                                  background: hex,
+                                  border: "1px solid var(--line)",
+                                }}
+                              />
+                            )}
+                            {c}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-3 mt-8">
                   <button onClick={() => setSelectedProduct(null)} className="btn-ghost flex-1 py-3 text-xs md:text-sm tracking-wide">
                     BEKOR QILISH
@@ -1292,7 +1342,7 @@ export default function Sansiro() {
             ) : (
               <div className="flex flex-col gap-4">
                 {cart.map((c) => (
-                  <div key={`${c.productId}-${c.size}`} className="flex gap-3 pb-4" style={{ borderBottom: "1px solid var(--line)" }}>
+                  <div key={`${c.productId}-${c.size}-${c.color || ""}`} className="flex gap-3 pb-4" style={{ borderBottom: "1px solid var(--line)" }}>
                     <div className="swatch" style={{ width: 56, height: 56, flexShrink: 0 }}>
                       {c.image ? (
                         <img src={c.image} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -1302,16 +1352,18 @@ export default function Sansiro() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{c.name}</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--ink-soft)" }}>O'lcham: {c.size}</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--ink-soft)" }}>
+                        O'lcham: {c.size}{c.color ? ` \u00b7 Rang: ${c.color}` : ""}
+                      </div>
                       <div className="flex items-center gap-3 mt-2">
-                        <button onClick={() => updateQty(c.productId, c.size, -1)} className="btn-ghost w-6 h-6 text-xs flex items-center justify-center">-</button>
+                        <button onClick={() => updateQty(c.productId, c.size, c.color, -1)} className="btn-ghost w-6 h-6 text-xs flex items-center justify-center">-</button>
                         <span className="font-mono text-sm">{c.qty}</span>
-                        <button onClick={() => updateQty(c.productId, c.size, 1)} className="btn-ghost w-6 h-6 text-xs flex items-center justify-center">+</button>
+                        <button onClick={() => updateQty(c.productId, c.size, c.color, 1)} className="btn-ghost w-6 h-6 text-xs flex items-center justify-center">+</button>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="font-mono text-sm">{money(c.price * c.qty)}</div>
-                      <button onClick={() => removeItem(c.productId, c.size)} className="text-xs mt-2" style={{ color: "var(--ink-soft)" }}>
+                      <button onClick={() => removeItem(c.productId, c.size, c.color)} className="text-xs mt-2" style={{ color: "var(--ink-soft)" }}>
                         O'chirish
                       </button>
                     </div>
@@ -1564,8 +1616,8 @@ export default function Sansiro() {
                     {new Date(o.createdAt).toLocaleDateString("uz-UZ")}
                   </div>
                   {(o.items || []).map((it) => (
-                    <div key={`${it.productId}-${it.size}`} className="text-xs flex justify-between py-0.5">
-                      <span>{it.name} ({it.size}) &times; {it.qty}</span>
+                    <div key={`${it.productId}-${it.size}-${it.color || ""}`} className="text-xs flex justify-between py-0.5">
+                      <span>{it.name} ({it.size}{it.color ? `, ${it.color}` : ""}) &times; {it.qty}</span>
                       <span className="font-mono">{money(it.price * it.qty)}</span>
                     </div>
                   ))}
