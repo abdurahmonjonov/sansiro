@@ -489,8 +489,14 @@ export default function Sansiro() {
       createdAt: new Date().toISOString(),
     };
     try {
-      const result = await window.storage.get(REVIEWS_KEY, true);
-      const list = result && result.value ? JSON.parse(result.value) : [];
+      let list = [];
+      try {
+        const result = await window.storage.get(REVIEWS_KEY, true);
+        list = result && result.value ? JSON.parse(result.value) : [];
+      } catch (err) {
+        if (!String(err.message || "").includes("Kalit topilmadi")) throw err;
+        list = [];
+      }
       list.unshift(entry);
       await window.storage.set(REVIEWS_KEY, JSON.stringify(list), true);
       setReviews((current) => [entry, ...current]);
@@ -575,13 +581,23 @@ export default function Sansiro() {
       status: "Yangi",
       createdAt: new Date().toISOString(),
     };
+    let list = [];
     try {
       const existing = await window.storage.get(ORDERS_KEY, true);
-      const list = existing && existing.value ? JSON.parse(existing.value) : [];
-      list.unshift(order);
+      list = existing && existing.value ? JSON.parse(existing.value) : [];
+    } catch (err) {
+      if (!String(err.message || "").includes("Kalit topilmadi")) {
+        setOrderError("Buyurtmani saqlashda xatolik yuz berdi. Internetni tekshirib, qayta urinib ko'ring.");
+        return;
+      }
+      list = [];
+    }
+    list.unshift(order);
+    try {
       await window.storage.set(ORDERS_KEY, JSON.stringify(list), true);
     } catch (err) {
-      // order still confirms locally even if the shared log couldn't be written
+      setOrderError("Buyurtmani saqlashda xatolik yuz berdi. Internetni tekshirib, qayta urinib ko'ring.");
+      return;
     }
     setLastOrderNumber(orderNumber);
     setCheckoutStep("confirmed");
@@ -721,13 +737,25 @@ export default function Sansiro() {
     setContactError(null);
     setContactSending(true);
     const entry = { ...contactForm, id: `msg-${Date.now()}`, createdAt: new Date().toISOString() };
+    let list = [];
     try {
       const existing = await window.storage.get(MESSAGES_KEY, true);
-      const list = existing && existing.value ? JSON.parse(existing.value) : [];
-      list.unshift(entry);
+      list = existing && existing.value ? JSON.parse(existing.value) : [];
+    } catch (err) {
+      if (!String(err.message || "").includes("Kalit topilmadi")) {
+        setContactError("Xabarni yuborishda xatolik yuz berdi. Qayta urinib ko'ring.");
+        setContactSending(false);
+        return;
+      }
+      list = [];
+    }
+    list.unshift(entry);
+    try {
       await window.storage.set(MESSAGES_KEY, JSON.stringify(list), true);
     } catch (err) {
-      // message still confirms to the visitor even if the shared log couldn't be written
+      setContactError("Xabarni yuborishda xatolik yuz berdi. Qayta urinib ko'ring.");
+      setContactSending(false);
+      return;
     }
     setContactSending(false);
     setContactSent(true);
