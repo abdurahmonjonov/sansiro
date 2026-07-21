@@ -92,6 +92,7 @@ const STYLES = `
   padding-top: 30px;
   transition: box-shadow 0.25s ease, transform 0.25s ease;
   width: 100%;
+  box-shadow: 0 1px 2px rgba(32,28,22,0.03), 0 3px 10px rgba(32,28,22,0.03);
 }
 .tag-card::before {
   content: "";
@@ -238,10 +239,12 @@ const STYLES = `
 .card {
   background: var(--paper);
   border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgba(32,28,22,0.03), 0 4px 14px rgba(32,28,22,0.04);
 }
 .card-frame {
   border: 1px solid var(--line);
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(32,28,22,0.03), 0 4px 14px rgba(32,28,22,0.04);
 }
 
 *:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
@@ -385,7 +388,7 @@ const TRANSLATIONS = {
     order_details: "Buyurtma ma'lumotlari", order_confirmed: "Buyurtma qabul qilindi", close: "YOPISH",
     thank_you: "Rahmat", order_number_label: "Buyurtmangiz raqami:", will_call: "Tez orada operatorimiz sizga qo'ng'iroq qilib, buyurtmani tasdiqlaydi.",
     login_register_title: "Kirish / Ro'yxatdan o'tish",
-    payment_method_label: "To'lov usuli", cash_label: "Naqd pul", card_label: "Karta orqali"
+    payment_method_label: "To'lov usuli", cash_label: "Naqd pul", card_label: "Karta orqali", similar_products: "Shunga o'xshash mahsulotlar"
   },
   ru: {
     nav_catalog: "Каталог", nav_about: "О нас", nav_contact: "Контакты", nav_admin: "Админ-панель",
@@ -410,7 +413,7 @@ const TRANSLATIONS = {
     order_details: "Данные заказа", order_confirmed: "Заказ принят", close: "ЗАКРЫТЬ",
     thank_you: "Спасибо", order_number_label: "Номер вашего заказа:", will_call: "Наш оператор скоро позвонит вам и подтвердит заказ.",
     login_register_title: "Вход / Регистрация",
-    payment_method_label: "Способ оплаты", cash_label: "Наличными", card_label: "Картой"
+    payment_method_label: "Способ оплаты", cash_label: "Наличными", card_label: "Картой", similar_products: "Похожие товары"
   },
   en: {
     nav_catalog: "Catalog", nav_about: "About", nav_contact: "Contact", nav_admin: "Admin panel",
@@ -435,7 +438,7 @@ const TRANSLATIONS = {
     order_details: "Order details", order_confirmed: "Order confirmed", close: "CLOSE",
     thank_you: "Thank you", order_number_label: "Your order number:", will_call: "Our operator will call you shortly to confirm the order.",
     login_register_title: "Sign in / Register",
-    payment_method_label: "Payment method", cash_label: "Cash", card_label: "Card"
+    payment_method_label: "Payment method", cash_label: "Cash", card_label: "Card", similar_products: "Similar products"
   },
 };
 
@@ -1014,7 +1017,17 @@ export default function Sansiro() {
       <style>{STYLES}</style>
 
       {/* Nav */}
-      <nav className="px-4 md:px-12" style={{ borderBottom: "1px solid var(--line)" }}>
+      <nav
+        className="px-4 md:px-12"
+        style={{
+          borderBottom: "1px solid var(--line)",
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+          background: "var(--paper)",
+          boxShadow: "0 2px 12px rgba(32,28,22,0.05)",
+        }}
+      >
         <div className="flex items-center justify-between py-4 md:py-5">
           <div className="flex items-center gap-3">
             <button
@@ -1133,6 +1146,9 @@ export default function Sansiro() {
             ? [selectedProduct.image]
             : [];
         const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : null;
+        const similarProducts = products
+          .filter((p) => p.id !== selectedProduct.id && p.category === selectedProduct.category)
+          .slice(0, 4);
         return (
           <section className="px-5 md:px-12 py-8 max-w-4xl mx-auto fade-in">
             <button onClick={() => scrollToSection("catalog")} className="text-xs mb-6 hover:underline" style={{ color: "var(--ink-soft)" }}>
@@ -1292,6 +1308,19 @@ export default function Sansiro() {
                 </div>
               </div>
             </div>
+
+            {similarProducts.length > 0 && (
+              <div className="mt-14 pt-10" style={{ borderTop: "1px solid var(--line)" }}>
+                <div className="crown-divider mb-8">
+                  <hr className="hairline" />
+                  <span className="font-display text-lg tracking-wide">{t("similar_products")}</span>
+                  <hr className="hairline" />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                  {similarProducts.map(renderProductCard)}
+                </div>
+              </div>
+            )}
           </section>
         );
       })() : currentPath === "/katalog" ? (
