@@ -49,6 +49,42 @@ const STYLES = `
   .ticker-track { animation: none; }
 }
 
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero-anim {
+  opacity: 0;
+  animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes badge-bump {
+  0% { transform: scale(0.6); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.badge-bump { animation: badge-bump 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); }
+  60% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.heart-pop { animation: heart-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+@keyframes added-flash {
+  0% { background: var(--ink); }
+  40% { background: var(--gold); }
+  100% { background: var(--ink); }
+}
+.added-flash { animation: added-flash 0.6s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-anim { animation: none; opacity: 1; }
+  .badge-bump, .heart-pop, .added-flash { animation: none; }
+}
+
 .tag-card {
   position: relative;
   background: var(--paper);
@@ -68,8 +104,14 @@ const STYLES = `
   border: 1.5px solid var(--ink);
 }
 .tag-card:hover {
-  box-shadow: inset 0 1px 3px rgba(32,28,22,0.18), 0 6px 16px rgba(32,28,22,0.08);
-  transform: translateY(-2px);
+  box-shadow: inset 0 1px 3px rgba(32,28,22,0.18), 0 10px 22px rgba(32,28,22,0.10);
+  transform: translateY(-4px) scale(1.015);
+}
+.tag-card .swatch img {
+  transition: transform 0.4s ease;
+}
+.tag-card:hover .swatch img {
+  transform: scale(1.05);
 }
 
 .swatch {
@@ -101,17 +143,20 @@ const STYLES = `
 .btn-ink {
   background: var(--ink);
   color: var(--paper);
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease, transform 0.12s ease;
 }
 .btn-ink:hover { background: #362F24; }
+.btn-ink:active { transform: scale(0.97); }
 .btn-ink:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn-ghost {
   background: transparent;
   color: var(--ink);
   border: 1px solid var(--ink);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
 }
 .btn-ghost:hover { background: var(--ink); color: var(--paper); }
+.btn-ghost:active { transform: scale(0.97); }
 
 .pill {
   border: 1px solid var(--line);
@@ -232,7 +277,7 @@ function UserIcon({ size = 18 }) {
 
 function HeartIcon({ size = 18, filled = false }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} xmlns="http://www.w3.org/2000/svg">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} xmlns="http://www.w3.org/2000/svg" className="heart-pop">
       <path
         d="M12 20.5s-7.5-4.6-10-9.3C0.4 8 1.8 4.8 4.8 4C7 3.4 9.4 4.3 12 7c2.6-2.7 5-3.6 7.2-3C22.2 4.8 23.6 8 22 11.2c-2.5 4.7-10 9.3-10 9.3Z"
         stroke="currentColor"
@@ -906,7 +951,7 @@ export default function Sansiro() {
         style={{ top: 8, right: 8, color: wishlist.includes(p.id) ? "var(--gold)" : "var(--ink-soft)" }}
         aria-label="Sevimlilarga qo'shish"
       >
-        <HeartIcon size={17} filled={wishlist.includes(p.id)} />
+        <HeartIcon key={wishlist.includes(p.id)} size={17} filled={wishlist.includes(p.id)} />
       </button>
       <div className="swatch aspect-square mx-3 mb-4">
         {p.image ? (
@@ -1026,7 +1071,8 @@ export default function Sansiro() {
               <HeartIcon size={16} filled={wishlist.length > 0} />
               {wishlist.length > 0 && (
                 <span
-                  className="inline-flex items-center justify-center rounded-full text-xs"
+                  key={wishlist.length}
+                  className="inline-flex items-center justify-center rounded-full text-xs badge-bump"
                   style={{ background: "var(--ink)", color: "var(--paper)", width: 20, height: 20 }}
                 >
                   {wishlist.length}
@@ -1041,7 +1087,8 @@ export default function Sansiro() {
               {t("cart")}
               {itemCount > 0 && (
                 <span
-                  className="inline-flex items-center justify-center rounded-full text-xs"
+                  key={itemCount}
+                  className="inline-flex items-center justify-center rounded-full text-xs badge-bump"
                   style={{ background: "var(--ink)", color: "var(--paper)", width: 20, height: 20 }}
                 >
                   {itemCount}
@@ -1302,23 +1349,24 @@ export default function Sansiro() {
       <>
       {/* Hero */}
       <header className="text-center px-5 py-16 md:py-28">
-        <div className="crown-divider mb-4">
+        <div className="crown-divider mb-4 hero-anim" style={{ animationDelay: "0.05s" }}>
           <hr className="hairline" />
           <Crown size={26} />
           <hr className="hairline" />
         </div>
-        <h1 className="hero-title font-display font-medium leading-none" style={{ fontSize: "clamp(2.8rem, 13vw, 8rem)" }}>
+        <h1 className="hero-title font-display font-medium leading-none hero-anim" style={{ fontSize: "clamp(2.8rem, 13vw, 8rem)", animationDelay: "0.15s" }}>
           SANSIRO
         </h1>
-        <p className="tracking-widest text-xs md:text-sm mt-3" style={{ color: "var(--ink-soft)" }}>
+        <p className="tracking-widest text-xs md:text-sm mt-3 hero-anim" style={{ color: "var(--ink-soft)", animationDelay: "0.25s" }}>
           EST. 2024 &bull; LUXURY CLOTHING
         </p>
-        <p className="font-display italic text-base md:text-xl mt-8 max-w-xl mx-auto px-2" style={{ color: "var(--ink)" }}>
+        <p className="font-display italic text-base md:text-xl mt-8 max-w-xl mx-auto px-2 hero-anim" style={{ color: "var(--ink)", animationDelay: "0.35s" }}>
           {t("hero_tagline")}
         </p>
         <button
           onClick={() => catalogRef.current?.scrollIntoView({ behavior: "smooth" })}
-          className="btn-ink font-mono text-xs tracking-wider px-8 py-3 mt-10"
+          className="btn-ink font-mono text-xs tracking-wider px-8 py-3 mt-10 hero-anim"
+          style={{ animationDelay: "0.45s" }}
         >
           {t("hero_cta")}
         </button>
@@ -1418,7 +1466,7 @@ export default function Sansiro() {
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-1" style={{ color: "var(--ink-soft)" }}>TELEFON</div>
-                <div className="font-mono">+998 95 818 70 30</div>
+                <div className="font-mono">+998 90 000 00 00</div>
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-2" style={{ color: "var(--ink-soft)" }}>IJTIMOIY TARMOQLAR</div>
