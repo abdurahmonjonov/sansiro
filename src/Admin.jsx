@@ -142,9 +142,10 @@ export default function SansiroAdmin() {
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(null);
 
-  const [tab, setTab] = useState("products"); // products | orders
+  const [tab, setTab] = useState("products"); // products | orders | completed | messages
   const [products, setProducts] = useState([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
   const [orders, setOrders] = useState([]);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -312,6 +313,64 @@ export default function SansiroAdmin() {
     return { count: orders.length, revenue };
   }, [orders]);
 
+  const filteredProducts = useMemo(() => {
+    const q = productSearch.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => p.name.toLowerCase().includes(q));
+  }, [products, productSearch]);
+
+  const activeOrders = useMemo(() => orders.filter((o) => o.status !== "Yakunlandi"), [orders]);
+  const completedOrders = useMemo(() => orders.filter((o) => o.status === "Yakunlandi"), [orders]);
+
+  const renderOrderCard = (o) => (
+    <div key={o.orderNumber} className="card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <span className="font-mono text-sm">{o.orderNumber}</span>
+          <span className="text-xs ml-3" style={{ color: "var(--ink-soft)" }}>
+            {new Date(o.createdAt).toLocaleString("uz-UZ")}
+          </span>
+        </div>
+        <select
+          className={`status-pill status-${o.status === "Bekor qilindi" ? "Bekor" : o.status}`}
+          value={o.status}
+          onChange={(e) => updateOrderStatus(o.orderNumber, e.target.value)}
+          style={{ background: "transparent" }}
+        >
+          <option value="Yangi">Yangi</option>
+          <option value="Jarayonda">Jarayonda</option>
+          <option value="Yakunlandi">Yakunlandi</option>
+          <option value="Bekor qilindi">Bekor qilindi</option>
+        </select>
+      </div>
+      <div className="text-sm mb-2">
+        <span style={{ color: "var(--ink-soft)" }}>Mijoz: </span>
+        {o.customer?.name} &middot; <span className="font-mono">{o.customer?.phone}</span>
+      </div>
+      <div className="text-sm mb-2" style={{ color: "var(--ink-soft)" }}>
+        Manzil: {o.customer?.address}
+      </div>
+      <div className="text-sm mb-2" style={{ color: "var(--ink-soft)" }}>
+        To'lov: {o.customer?.paymentMethod === "karta" ? "Karta orqali" : "Naqd pul"}
+      </div>
+      {o.customer?.notes && (
+        <div className="text-sm mb-2" style={{ color: "var(--ink-soft)" }}>Izoh: {o.customer.notes}</div>
+      )}
+      <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--line)" }}>
+        {(o.items || []).map((it) => (
+          <div key={`${it.productId}-${it.size}-${it.color || ""}`} className="flex justify-between text-xs py-1">
+            <span>{it.name} ({it.size}{it.color ? `, ${it.color}` : ""}) &times; {it.qty}</span>
+            <span className="font-mono">{money(it.price * it.qty)}</span>
+          </div>
+        ))}
+        <div className="flex justify-between text-sm mt-2 font-medium">
+          <span>Jami</span>
+          <span className="font-mono">{money(o.subtotal)}</span>
+        </div>
+      </div>
+    </div>
+  );
+
   if (!unlocked) {
     return (
       <div className="admin-root min-h-screen flex items-center justify-center px-6">
@@ -361,7 +420,10 @@ export default function SansiroAdmin() {
             MAHSULOTLAR ({products.length})
           </button>
           <button onClick={() => setTab("orders")} className={`tab pb-3 text-sm tracking-wide ${tab === "orders" ? "active" : ""}`}>
-            BUYURTMALAR ({orders.length})
+            BUYURTMALAR ({activeOrders.length})
+          </button>
+          <button onClick={() => setTab("completed")} className={`tab pb-3 text-sm tracking-wide ${tab === "completed" ? "active" : ""}`}>
+            YAKUNLANGAN ({completedOrders.length})
           </button>
           <button onClick={() => setTab("messages")} className={`tab pb-3 text-sm tracking-wide ${tab === "messages" ? "active" : ""}`}>
             XABARLAR ({messages.length})
@@ -480,8 +542,21 @@ export default function SansiroAdmin() {
                 (keyin tahrirlashingiz mumkin).
               </p>
             ) : (
-              <div className="card divide-y" style={{ borderColor: "var(--line)" }}>
-                {products.map((p) => (
+              <>
+                <input
+                  type="text"
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Mahsulot nomi bo'yicha qidirish..."
+                  className="input w-full px-3 py-2 text-sm mb-4"
+                />
+                {filteredProducts.length === 0 ? (
+                  <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                    "{productSearch}" bo'yicha hech narsa topilmadi.
+                  </p>
+                ) : (
+                <div className="card divide-y" style={{ borderColor: "var(--line)" }}>
+                {filteredProducts.map((p) => (
                   <div key={p.id} className="flex items-center justify-between gap-4 p-4" style={{ borderBottom: "1px solid var(--line)" }}>
                     <div className="flex items-center gap-3 min-w-0">
                       {p.image ? (
@@ -507,7 +582,9 @@ export default function SansiroAdmin() {
                     </div>
                   </div>
                 ))}
-              </div>
+                </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -527,58 +604,25 @@ export default function SansiroAdmin() {
 
             {!ordersLoaded ? (
               <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Yuklanmoqda...</p>
-            ) : orders.length === 0 ? (
-              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Hali buyurtma yo'q.</p>
+            ) : activeOrders.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Hali faol buyurtma yo'q.</p>
             ) : (
               <div className="flex flex-col gap-4">
-                {orders.map((o) => (
-                  <div key={o.orderNumber} className="card p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                      <div>
-                        <span className="font-mono text-sm">{o.orderNumber}</span>
-                        <span className="text-xs ml-3" style={{ color: "var(--ink-soft)" }}>
-                          {new Date(o.createdAt).toLocaleString("uz-UZ")}
-                        </span>
-                      </div>
-                      <select
-                        className={`status-pill status-${o.status === "Bekor qilindi" ? "Bekor" : o.status}`}
-                        value={o.status}
-                        onChange={(e) => updateOrderStatus(o.orderNumber, e.target.value)}
-                        style={{ background: "transparent" }}
-                      >
-                        <option value="Yangi">Yangi</option>
-                        <option value="Jarayonda">Jarayonda</option>
-                        <option value="Yakunlandi">Yakunlandi</option>
-                        <option value="Bekor qilindi">Bekor qilindi</option>
-                      </select>
-                    </div>
-                    <div className="text-sm mb-2">
-                      <span style={{ color: "var(--ink-soft)" }}>Mijoz: </span>
-                      {o.customer?.name} &middot; <span className="font-mono">{o.customer?.phone}</span>
-                    </div>
-                    <div className="text-sm mb-2" style={{ color: "var(--ink-soft)" }}>
-                      Manzil: {o.customer?.address}
-                    </div>
-                    <div className="text-sm mb-2" style={{ color: "var(--ink-soft)" }}>
-                      To'lov: {o.customer?.paymentMethod === "karta" ? "Karta orqali" : "Naqd pul"}
-                    </div>
-                    {o.customer?.notes && (
-                      <div className="text-sm mb-2" style={{ color: "var(--ink-soft)" }}>Izoh: {o.customer.notes}</div>
-                    )}
-                    <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--line)" }}>
-                      {(o.items || []).map((it) => (
-                        <div key={`${it.productId}-${it.size}-${it.color || ""}`} className="flex justify-between text-xs py-1">
-                          <span>{it.name} ({it.size}{it.color ? `, ${it.color}` : ""}) &times; {it.qty}</span>
-                          <span className="font-mono">{money(it.price * it.qty)}</span>
-                        </div>
-                      ))}
-                      <div className="flex justify-between text-sm mt-2 font-medium">
-                        <span>Jami</span>
-                        <span className="font-mono">{money(o.subtotal)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {activeOrders.map(renderOrderCard)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "completed" && (
+          <div className="max-w-4xl fade-in pb-10">
+            {!ordersLoaded ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Yuklanmoqda...</p>
+            ) : completedOrders.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Hali yakunlangan buyurtma yo'q.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {completedOrders.map(renderOrderCard)}
               </div>
             )}
           </div>
