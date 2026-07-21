@@ -559,6 +559,9 @@ export default function SansiroAdmin() {
                     <div className="text-sm mb-2" style={{ color: "var(--ink-soft)" }}>
                       Manzil: {o.customer?.address}
                     </div>
+                    <div className="text-sm mb-2" style={{ color: "var(--ink-soft)" }}>
+                      To'lov: {o.customer?.paymentMethod === "karta" ? "Karta orqali" : "Naqd pul"}
+                    </div>
                     {o.customer?.notes && (
                       <div className="text-sm mb-2" style={{ color: "var(--ink-soft)" }}>Izoh: {o.customer.notes}</div>
                     )}
