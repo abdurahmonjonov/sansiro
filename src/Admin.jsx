@@ -24,38 +24,81 @@ const STYLES = `
 .font-display { font-family: 'Bodoni Moda', serif; }
 .font-mono { font-family: 'IBM Plex Mono', monospace; }
 
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+
 .card {
   background: var(--paper);
   border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgba(32,28,22,0.04), 0 4px 14px rgba(32,28,22,0.05);
 }
 
+.list-row {
+  transition: background 0.15s ease;
+}
+.list-row:hover {
+  background: rgba(151,120,62,0.05);
+}
+
+.tab-bar {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--paper-deep);
+  padding: 4px;
+  border: 1px solid var(--line);
+}
 .tab {
-  border-bottom: 2px solid transparent;
+  padding: 8px 18px;
   color: var(--ink-soft);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .tab.active {
-  border-bottom-color: var(--ink);
+  background: var(--paper);
   color: var(--ink);
+  box-shadow: 0 1px 3px rgba(32,28,22,0.10);
+}
+.tab:not(.active):hover {
+  color: var(--ink);
+}
+
+.stat-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  box-shadow: 0 1px 2px rgba(32,28,22,0.04), 0 4px 14px rgba(32,28,22,0.05);
 }
 
 .btn-ink {
   background: var(--ink);
   color: var(--paper);
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 .btn-ink:hover { background: #362F24; }
+.btn-ink:active { transform: scale(0.98); }
 .btn-ink:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn-ghost {
   background: transparent;
   color: var(--ink);
   border: 1px solid var(--ink);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 .btn-ghost:hover { background: var(--ink); color: var(--paper); }
+.btn-ghost:active { transform: scale(0.98); }
 
 .btn-danger {
   background: transparent;
   color: var(--danger);
   border: 1px solid var(--danger);
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .btn-danger:hover { background: var(--danger); color: var(--paper); }
 
@@ -63,8 +106,9 @@ const STYLES = `
   background: var(--paper);
   border: 1px solid var(--line);
   color: var(--ink);
+  transition: border-color 0.15s ease;
 }
-.input:focus { outline: none; border-color: var(--ink); }
+.input:focus { outline: none; border-color: var(--gold); }
 
 select.input { background: var(--paper); }
 
@@ -72,14 +116,15 @@ select.input { background: var(--paper); }
   font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.05em;
-  padding: 2px 10px;
+  padding: 3px 12px;
   border-radius: 999px;
   border: 1px solid;
+  font-weight: 500;
 }
-.status-Yangi { color: var(--gold); border-color: var(--gold); }
-.status-Jarayonda { color: #3B5C8E; border-color: #3B5C8E; }
-.status-Yakunlandi { color: var(--ok); border-color: var(--ok); }
-.status-Bekor { color: var(--danger); border-color: var(--danger); }
+.status-Yangi { color: var(--gold); border-color: var(--gold); background: rgba(151,120,62,0.08); }
+.status-Jarayonda { color: #3B5C8E; border-color: #3B5C8E; background: rgba(59,92,142,0.08); }
+.status-Yakunlandi { color: var(--ok); border-color: var(--ok); background: rgba(63,107,74,0.08); }
+.status-Bekor { color: var(--danger); border-color: var(--danger); background: rgba(142,59,59,0.08); }
 
 .fade-in { animation: admin-fade 0.3s ease-out; }
 @keyframes admin-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
@@ -322,8 +367,15 @@ export default function SansiroAdmin() {
   const activeOrders = useMemo(() => orders.filter((o) => o.status !== "Yakunlandi"), [orders]);
   const completedOrders = useMemo(() => orders.filter((o) => o.status === "Yakunlandi"), [orders]);
 
+  const ORDER_ACCENT = {
+    "Yangi": "var(--gold)",
+    "Jarayonda": "#3B5C8E",
+    "Yakunlandi": "var(--ok)",
+    "Bekor qilindi": "var(--danger)",
+  };
+
   const renderOrderCard = (o) => (
-    <div key={o.orderNumber} className="card p-4">
+    <div key={o.orderNumber} className="card p-5" style={{ borderLeft: `3px solid ${ORDER_ACCENT[o.status] || "var(--line)"}` }}>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div>
           <span className="font-mono text-sm">{o.orderNumber}</span>
@@ -404,36 +456,40 @@ export default function SansiroAdmin() {
     <div className="admin-root min-h-screen">
       <style>{STYLES}</style>
 
-      <nav className="flex items-center justify-between px-5 md:px-10 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
-        <div className="flex items-center gap-2">
-          <Crown size={16} />
-          <span className="font-display text-lg">SANSIRO ADMIN</span>
+      <nav className="flex items-center justify-between px-5 md:px-10 py-4" style={{ borderBottom: "1px solid var(--line)", background: "var(--paper)" }}>
+        <div className="flex items-center gap-2.5">
+          <Crown size={18} />
+          <div>
+            <div className="font-display text-lg leading-none">SANSIRO</div>
+            <div className="eyebrow" style={{ fontSize: 10, marginTop: 2 }}>Boshqaruv paneli</div>
+          </div>
         </div>
         <button onClick={() => setUnlocked(false)} className="btn-ghost px-4 py-1.5 text-xs tracking-wide">
           CHIQISH
         </button>
       </nav>
 
-      <div className="px-5 md:px-10 pt-6">
-        <div className="flex gap-6 mb-6" style={{ borderBottom: "1px solid var(--line)" }}>
-          <button onClick={() => setTab("products")} className={`tab pb-3 text-sm tracking-wide ${tab === "products" ? "active" : ""}`}>
+      <div className="px-5 md:px-10 pt-8 pb-16 max-w-6xl mx-auto">
+        <div className="tab-bar mb-8">
+          <button onClick={() => setTab("products")} className={`tab ${tab === "products" ? "active" : ""}`}>
             MAHSULOTLAR ({products.length})
           </button>
-          <button onClick={() => setTab("orders")} className={`tab pb-3 text-sm tracking-wide ${tab === "orders" ? "active" : ""}`}>
+          <button onClick={() => setTab("orders")} className={`tab ${tab === "orders" ? "active" : ""}`}>
             BUYURTMALAR ({activeOrders.length})
           </button>
-          <button onClick={() => setTab("completed")} className={`tab pb-3 text-sm tracking-wide ${tab === "completed" ? "active" : ""}`}>
+          <button onClick={() => setTab("completed")} className={`tab ${tab === "completed" ? "active" : ""}`}>
             YAKUNLANGAN ({completedOrders.length})
           </button>
-          <button onClick={() => setTab("messages")} className={`tab pb-3 text-sm tracking-wide ${tab === "messages" ? "active" : ""}`}>
+          <button onClick={() => setTab("messages")} className={`tab ${tab === "messages" ? "active" : ""}`}>
             XABARLAR ({messages.length})
           </button>
         </div>
 
         {tab === "products" && (
           <div className="max-w-4xl fade-in">
-            <form onSubmit={submitDraft} className="card p-5 mb-8">
-              <p className="font-display text-lg mb-4">{editingId ? "Mahsulotni tahrirlash" : "Yangi mahsulot qo'shish"}</p>
+            <form onSubmit={submitDraft} className="card p-6 mb-8">
+              <div className="eyebrow mb-1">{editingId ? "Tahrirlash" : "Yangi yozuv"}</div>
+              <p className="font-display text-xl mb-5">{editingId ? "Mahsulotni tahrirlash" : "Yangi mahsulot qo'shish"}</p>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <input
                   className="input px-3 py-2 text-sm md:col-span-2"
@@ -557,7 +613,7 @@ export default function SansiroAdmin() {
                 ) : (
                 <div className="card divide-y" style={{ borderColor: "var(--line)" }}>
                 {filteredProducts.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between gap-4 p-4" style={{ borderBottom: "1px solid var(--line)" }}>
+                  <div key={p.id} className="list-row flex items-center justify-between gap-4 px-4 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
                     <div className="flex items-center gap-3 min-w-0">
                       {p.image ? (
                         <img
@@ -592,13 +648,13 @@ export default function SansiroAdmin() {
         {tab === "orders" && (
           <div className="max-w-4xl fade-in pb-10">
             <div className="grid grid-cols-2 gap-4 mb-8 max-w-md">
-              <div className="card p-4">
-                <div className="text-xs" style={{ color: "var(--ink-soft)" }}>Jami buyurtmalar</div>
-                <div className="font-mono text-xl mt-1">{stats.count}</div>
+              <div className="stat-card p-5">
+                <div className="eyebrow">Jami buyurtmalar</div>
+                <div className="font-display text-3xl mt-2">{stats.count}</div>
               </div>
-              <div className="card p-4">
-                <div className="text-xs" style={{ color: "var(--ink-soft)" }}>Umumiy summa</div>
-                <div className="font-mono text-xl mt-1">{money(stats.revenue)}</div>
+              <div className="stat-card p-5">
+                <div className="eyebrow">Umumiy summa</div>
+                <div className="font-mono text-xl mt-2">{money(stats.revenue)}</div>
               </div>
             </div>
 
