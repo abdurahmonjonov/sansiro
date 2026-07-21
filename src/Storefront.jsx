@@ -339,7 +339,8 @@ const TRANSLATIONS = {
     checkout_notes: "Izoh (ixtiyoriy)", confirm_order: "BUYURTMANI TASDIQLASH", back: "ORQAGA",
     order_details: "Buyurtma ma'lumotlari", order_confirmed: "Buyurtma qabul qilindi", close: "YOPISH",
     thank_you: "Rahmat", order_number_label: "Buyurtmangiz raqami:", will_call: "Tez orada operatorimiz sizga qo'ng'iroq qilib, buyurtmani tasdiqlaydi.",
-    login_register_title: "Kirish / Ro'yxatdan o'tish"
+    login_register_title: "Kirish / Ro'yxatdan o'tish",
+    payment_method_label: "To'lov usuli", cash_label: "Naqd pul", card_label: "Karta orqali"
   },
   ru: {
     nav_catalog: "Каталог", nav_about: "О нас", nav_contact: "Контакты", nav_admin: "Админ-панель",
@@ -363,7 +364,8 @@ const TRANSLATIONS = {
     checkout_notes: "Комментарий (необязательно)", confirm_order: "ПОДТВЕРДИТЬ ЗАКАЗ", back: "НАЗАД",
     order_details: "Данные заказа", order_confirmed: "Заказ принят", close: "ЗАКРЫТЬ",
     thank_you: "Спасибо", order_number_label: "Номер вашего заказа:", will_call: "Наш оператор скоро позвонит вам и подтвердит заказ.",
-    login_register_title: "Вход / Регистрация"
+    login_register_title: "Вход / Регистрация",
+    payment_method_label: "Способ оплаты", cash_label: "Наличными", card_label: "Картой"
   },
   en: {
     nav_catalog: "Catalog", nav_about: "About", nav_contact: "Contact", nav_admin: "Admin panel",
@@ -387,7 +389,8 @@ const TRANSLATIONS = {
     checkout_notes: "Note (optional)", confirm_order: "CONFIRM ORDER", back: "BACK",
     order_details: "Order details", order_confirmed: "Order confirmed", close: "CLOSE",
     thank_you: "Thank you", order_number_label: "Your order number:", will_call: "Our operator will call you shortly to confirm the order.",
-    login_register_title: "Sign in / Register"
+    login_register_title: "Sign in / Register",
+    payment_method_label: "Payment method", cash_label: "Cash", card_label: "Card"
   },
 };
 
@@ -447,7 +450,7 @@ export default function Sansiro() {
   const [reviewForm, setReviewForm] = useState({ name: "", rating: 5, comment: "" });
   const [reviewError, setReviewError] = useState(null);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
-  const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "", notes: "" });
+  const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "", notes: "", paymentMethod: "naqd" });
   const [orderError, setOrderError] = useState(null);
   const [lastOrderNumber, setLastOrderNumber] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1642,6 +1645,25 @@ export default function Sansiro() {
                 />
               </div>
               <div>
+                <label className="block text-xs mb-2" style={{ color: "var(--ink-soft)" }}>{t("payment_method_label")}</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOrderForm({ ...orderForm, paymentMethod: "naqd" })}
+                    className={`pill px-4 py-1.5 text-sm flex-1 ${orderForm.paymentMethod === "naqd" ? "active" : ""}`}
+                  >
+                    {t("cash_label")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrderForm({ ...orderForm, paymentMethod: "karta" })}
+                    className={`pill px-4 py-1.5 text-sm flex-1 ${orderForm.paymentMethod === "karta" ? "active" : ""}`}
+                  >
+                    {t("card_label")}
+                  </button>
+                </div>
+              </div>
+              <div>
                 <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>{t("checkout_notes")}</label>
                 <input
                   className="input-line py-2 text-sm"
@@ -1670,7 +1692,7 @@ export default function Sansiro() {
                 {t("will_call")}
               </p>
               <button
-                onClick={() => { setPanel("none"); setCheckoutStep("cart"); setOrderForm({ name: "", phone: "", address: "", notes: "" }); }}
+                onClick={() => { setPanel("none"); setCheckoutStep("cart"); setOrderForm({ name: "", phone: "", address: "", notes: "", paymentMethod: "naqd" }); }}
                 className="btn-ink px-8 py-3 text-sm tracking-wide mt-8"
               >
                 {t("close")}
