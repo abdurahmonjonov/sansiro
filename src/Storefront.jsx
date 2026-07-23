@@ -356,7 +356,7 @@ const SOCIAL_LINKS = {
   instagram: "https://www.instagram.com/sansiro__uz/",
 };
 
-const CATEGORIES = ["Barchasi", "Ayollar", "Erkaklar", "Aksessuar"];
+const CATEGORIES = ["Barchasi", "Erkaklar", "Aksessuar"];
 
 const LANGUAGES = [
   { code: "uz", label: "UZ" },
@@ -443,9 +443,9 @@ const TRANSLATIONS = {
 };
 
 const CATEGORY_LABELS = {
-  uz: { "Barchasi": "Barchasi", "Ayollar": "Ayollar", "Erkaklar": "Erkaklar", "Aksessuar": "Aksessuar" },
-  ru: { "Barchasi": "Все", "Ayollar": "Женщины", "Erkaklar": "Мужчины", "Aksessuar": "Аксессуары" },
-  en: { "Barchasi": "All", "Ayollar": "Women", "Erkaklar": "Men", "Aksessuar": "Accessories" },
+  uz: { "Barchasi": "Barchasi", "Erkaklar": "Erkaklar", "Aksessuar": "Aksessuar" },
+  ru: { "Barchasi": "Все", "Erkaklar": "Мужчины", "Aksessuar": "Аксессуары" },
+  en: { "Barchasi": "All", "Erkaklar": "Men", "Aksessuar": "Accessories" },
 };
 
 const COLOR_HEX = {
@@ -460,14 +460,11 @@ function colorToHex(name) {
 }
 
 const PRODUCTS = [
-  { id: "p1", name: "Ipak ko'ylak", category: "Ayollar", price: 1450000, sizes: ["XS", "S", "M", "L"] },
-  { id: "p2", name: "Yun palto", category: "Ayollar", price: 3200000, sizes: ["S", "M", "L"] },
   { id: "p3", name: "Klassik kostyum", category: "Erkaklar", price: 4100000, sizes: ["48", "50", "52", "54"] },
   { id: "p4", name: "Kashmir sviter", category: "Erkaklar", price: 1890000, sizes: ["M", "L", "XL"] },
   { id: "p5", name: "Ipak sharf", category: "Aksessuar", price: 620000, sizes: ["Bir xil o'lcham"] },
   { id: "p6", name: "Charm kamar", category: "Aksessuar", price: 540000, sizes: ["90", "95", "100"] },
   { id: "p7", name: "Lineya ko'ylak", category: "Erkaklar", price: 980000, sizes: ["S", "M", "L", "XL"] },
-  { id: "p8", name: "Drape ko'ylak", category: "Ayollar", price: 2650000, sizes: ["XS", "S", "M"] },
   { id: "p9", name: "Ipak galstuk", category: "Aksessuar", price: 410000, sizes: ["Bir xil o'lcham"] },
 ];
 
@@ -526,6 +523,8 @@ export default function Sansiro() {
   const [myOrders, setMyOrders] = useState([]);
   const [myOrdersLoading, setMyOrdersLoading] = useState(false);
   const [myOrdersLoaded, setMyOrdersLoaded] = useState(false);
+  const [cancelingOrderNumber, setCancelingOrderNumber] = useState(null);
+  const [cancelError, setCancelError] = useState(null);
 
   // Contact form state
   const [contactForm, setContactForm] = useState({ name: "", contact: "", message: "" });
@@ -974,6 +973,30 @@ export default function Sansiro() {
     } finally {
       setMyOrdersLoading(false);
       setMyOrdersLoaded(true);
+    }
+  };
+
+  const cancelMyOrder = async (orderNumber) => {
+    setCancelingOrderNumber(orderNumber);
+    setCancelError(null);
+    try {
+      const result = await window.storage.get(ORDERS_KEY, true);
+      const fullList = result && result.value ? JSON.parse(result.value) : [];
+      const target = fullList.find((o) => o.orderNumber === orderNumber);
+      if (!target || target.status !== "Yangi") {
+        setCancelError("Bu buyurtma allaqachon jarayonda, uni bekor qilib bo'lmaydi.");
+        await loadMyOrders();
+        return;
+      }
+      const updated = fullList.map((o) => (o.orderNumber === orderNumber ? { ...o, status: "Bekor qilindi" } : o));
+      await window.storage.set(ORDERS_KEY, JSON.stringify(updated), true);
+      setMyOrders((current) =>
+        current.map((o) => (o.orderNumber === orderNumber ? { ...o, status: "Bekor qilindi" } : o))
+      );
+    } catch (err) {
+      setCancelError("Bekor qilishda xatolik yuz berdi. Qayta urinib ko'ring.");
+    } finally {
+      setCancelingOrderNumber(null);
     }
   };
 
@@ -2020,6 +2043,7 @@ export default function Sansiro() {
           <button onClick={() => setPanel("none")} aria-label="Yopish" className="text-lg">&times;</button>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
+          {cancelError && <p className="text-xs mb-3" style={{ color: "var(--danger)" }}>{cancelError}</p>}
           {myOrdersLoading ? (
             <p className="text-sm text-center mt-10" style={{ color: "var(--ink-soft)" }}>Yuklanmoqda...</p>
           ) : myOrders.length === 0 ? (
@@ -2055,6 +2079,16 @@ export default function Sansiro() {
                     <span>Jami</span>
                     <span className="font-mono">{money(o.promoCode ? o.total : o.subtotal)}</span>
                   </div>
+                  {o.status === "Yangi" && (
+                    <button
+                      onClick={() => cancelMyOrder(o.orderNumber)}
+                      disabled={cancelingOrderNumber === o.orderNumber}
+                      className="text-xs mt-2"
+                      style={{ color: "var(--danger)" }}
+                    >
+                      {cancelingOrderNumber === o.orderNumber ? "Bekor qilinmoqda..." : "Buyurtmani bekor qilish"}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
