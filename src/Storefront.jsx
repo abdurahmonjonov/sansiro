@@ -479,6 +479,7 @@ const PRODUCTS_KEY = "sansiro:products";
 const ORDERS_KEY = "sansiro:orders";
 const WISHLIST_KEY = "sansiro:wishlist";
 const MESSAGES_KEY = "sansiro:messages";
+const PROMO_KEY = "sansiro:promocodes";
 const REVIEWS_KEY = "sansiro:reviews";
 
 export default function Sansiro() {
@@ -488,6 +489,10 @@ export default function Sansiro() {
   const [panel, setPanel] = useState("none"); // none | cart | auth
   const [policyView, setPolicyView] = useState(null); // null | "return" | "privacy"
   const [checkoutStep, setCheckoutStep] = useState("cart"); // cart | form | confirmed
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [promoError, setPromoError] = useState(null);
+  const [promoChecking, setPromoChecking] = useState(false);
   const [activeCategory, setActiveCategory] = useState("Barchasi");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -766,6 +771,41 @@ export default function Sansiro() {
   const subtotal = useMemo(() => cart.reduce((s, c) => s + c.price * c.qty, 0), [cart]);
   const itemCount = useMemo(() => cart.reduce((s, c) => s + c.qty, 0), [cart]);
 
+  const promoValid = appliedPromo && subtotal >= appliedPromo.minOrderAmount;
+  const discountAmount = promoValid ? Math.round(subtotal * (appliedPromo.discountPercent / 100)) : 0;
+  const finalTotal = subtotal - discountAmount;
+
+  const applyPromoCode = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+    setPromoChecking(true);
+    setPromoError(null);
+    try {
+      const result = await window.storage.get(PROMO_KEY, true);
+      const list = result && result.value ? JSON.parse(result.value) : [];
+      const match = list.find((p) => p.code === code);
+      if (!match || !match.active) {
+        setPromoError("Bu promo-kod topilmadi yoki faol emas.");
+        return;
+      }
+      if (subtotal < match.minOrderAmount) {
+        setPromoError(`Bu kod faqat ${money(match.minOrderAmount)}dan yuqori xaridlar uchun amal qiladi.`);
+        return;
+      }
+      setAppliedPromo(match);
+      setPromoInput("");
+    } catch (err) {
+      setPromoError("Kodni tekshirishda xatolik yuz berdi.");
+    } finally {
+      setPromoChecking(false);
+    }
+  };
+
+  const removePromoCode = () => {
+    setAppliedPromo(null);
+    setPromoError(null);
+  };
+
   const goToCheckoutForm = () => {
     setOrderForm((f) => ({
       ...f,
@@ -787,6 +827,9 @@ export default function Sansiro() {
       orderNumber,
       items: cart,
       subtotal,
+      promoCode: promoValid ? appliedPromo.code : null,
+      discountAmount,
+      total: finalTotal,
       customer: { ...orderForm },
       status: "Yangi",
       createdAt: new Date().toISOString(),
@@ -812,6 +855,8 @@ export default function Sansiro() {
     setLastOrderNumber(orderNumber);
     setCheckoutStep("confirmed");
     setCart([]);
+    setAppliedPromo(null);
+    setPromoInput("");
   };
 
   const normalizePhone = (v) => v.replace(/[^0-9+]/g, "");
@@ -1780,9 +1825,48 @@ export default function Sansiro() {
 
         {checkoutStep === "cart" && cart.length > 0 && (
           <div className="p-5" style={{ borderTop: "1px solid var(--line)" }}>
+            {promoValid ? (
+              <div className="flex items-center justify-between mb-3 text-xs">
+                <span style={{ color: "var(--gold)" }}>
+                  Promo: <span className="font-mono">{appliedPromo.code}</span> (-{appliedPromo.discountPercent}%)
+                </span>
+                <button onClick={removePromoCode} style={{ color: "var(--ink-soft)" }}>Olib tashlash</button>
+              </div>
+            ) : (
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={promoInput}
+                  onChange={(e) => { setPromoInput(e.target.value); setPromoError(null); }}
+                  placeholder="Promo-kod"
+                  className="input-line flex-1 py-1.5 text-xs font-mono uppercase"
+                />
+                <button
+                  onClick={applyPromoCode}
+                  disabled={promoChecking || !promoInput.trim()}
+                  className="btn-ghost px-4 py-1.5 text-xs"
+                >
+                  {promoChecking ? "..." : "QO'LLASH"}
+                </button>
+              </div>
+            )}
+            {promoError && <p className="text-xs mb-3" style={{ color: "var(--danger)" }}>{promoError}</p>}
+
+            {promoValid && (
+              <div className="flex justify-between text-xs mb-1" style={{ color: "var(--ink-soft)" }}>
+                <span>Oraliq summa</span>
+                <span className="font-mono">{money(subtotal)}</span>
+              </div>
+            )}
+            {promoValid && (
+              <div className="flex justify-between text-xs mb-2" style={{ color: "var(--gold)" }}>
+                <span>Chegirma</span>
+                <span className="font-mono">-{money(discountAmount)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm mb-4">
               <span style={{ color: "var(--ink-soft)" }}>{t("total")}</span>
-              <span className="font-mono">{money(subtotal)}</span>
+              <span className="font-mono">{money(finalTotal)}</span>
             </div>
             <button onClick={goToCheckoutForm} className="btn-ink w-full py-3 text-sm tracking-wide">
               {t("place_order")}
@@ -1961,9 +2045,15 @@ export default function Sansiro() {
                       <span className="font-mono">{money(it.price * it.qty)}</span>
                     </div>
                   ))}
+                  {o.promoCode && (
+                    <div className="text-xs flex justify-between py-0.5" style={{ color: "var(--gold)" }}>
+                      <span>Promo ({o.promoCode})</span>
+                      <span className="font-mono">-{money(o.discountAmount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm font-medium mt-2">
                     <span>Jami</span>
-                    <span className="font-mono">{money(o.subtotal)}</span>
+                    <span className="font-mono">{money(o.promoCode ? o.total : o.subtotal)}</span>
                   </div>
                 </div>
               ))}
