@@ -154,6 +154,7 @@ const STARTER_PRODUCTS = [
 const PRODUCTS_KEY = "sansiro:products";
 const ORDERS_KEY = "sansiro:orders";
 const MESSAGES_KEY = "sansiro:messages";
+const PROMO_KEY = "sansiro:promocodes";
 const ADMIN_PIN = "2024"; // O'zgartirish uchun shu qatorni tahrirlang
 
 const money = (n) => new Intl.NumberFormat("uz-UZ").format(Math.round(n)) + " so'm";
@@ -195,6 +196,11 @@ export default function SansiroAdmin() {
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [messages, setMessages] = useState([]);
   const [messagesLoaded, setMessagesLoaded] = useState(false);
+  const [promoCodes, setPromoCodes] = useState([]);
+  const [promoCodesLoaded, setPromoCodesLoaded] = useState(false);
+  const [promoDraft, setPromoDraft] = useState({ code: "", discountPercent: "", minOrderAmount: "250000" });
+  const [promoError, setPromoError] = useState(null);
+  const [promoSaving, setPromoSaving] = useState(false);
 
   const [draft, setDraft] = useState(emptyDraft);
   const [editingId, setEditingId] = useState(null);
@@ -232,6 +238,16 @@ export default function SansiroAdmin() {
         setMessages([]);
       } finally {
         setMessagesLoaded(true);
+      }
+    })();
+    (async () => {
+      try {
+        const result = await window.storage.get(PROMO_KEY, true);
+        if (result && result.value) setPromoCodes(JSON.parse(result.value));
+      } catch (e) {
+        setPromoCodes([]);
+      } finally {
+        setPromoCodesLoaded(true);
       }
     })();
   }, [unlocked]);
@@ -353,8 +369,53 @@ export default function SansiroAdmin() {
     await saveOrders(updated);
   };
 
+  const savePromoCodes = async (list) => {
+    setPromoCodes(list);
+    try {
+      await window.storage.set(PROMO_KEY, JSON.stringify(list), true);
+    } catch (e) {
+      setPromoError("Saqlashda xatolik yuz berdi, qayta urinib ko'ring.");
+    }
+  };
+
+  const submitPromoDraft = async (e) => {
+    e.preventDefault();
+    const code = promoDraft.code.trim().toUpperCase();
+    const discountPercent = Number(promoDraft.discountPercent);
+    const minOrderAmount = Number(promoDraft.minOrderAmount);
+    if (!code || !discountPercent || discountPercent <= 0 || discountPercent > 90) {
+      setPromoError("Kod nomini va 1-90 oralig'idagi chegirma foizini kiriting.");
+      return;
+    }
+    if (promoCodes.some((p) => p.code === code)) {
+      setPromoError("Bu kod allaqachon mavjud.");
+      return;
+    }
+    setPromoSaving(true);
+    setPromoError(null);
+    const entry = {
+      code,
+      discountPercent,
+      minOrderAmount: minOrderAmount || 0,
+      active: true,
+      createdAt: new Date().toISOString(),
+    };
+    await savePromoCodes([entry, ...promoCodes]);
+    setPromoSaving(false);
+    setPromoDraft({ code: "", discountPercent: "", minOrderAmount: "250000" });
+  };
+
+  const togglePromoActive = async (code) => {
+    const updated = promoCodes.map((p) => (p.code === code ? { ...p, active: !p.active } : p));
+    await savePromoCodes(updated);
+  };
+
+  const deletePromoCode = async (code) => {
+    await savePromoCodes(promoCodes.filter((p) => p.code !== code));
+  };
+
   const stats = useMemo(() => {
-    const revenue = orders.reduce((s, o) => s + (o.subtotal || 0), 0);
+    const revenue = orders.reduce((s, o) => s + (o.promoCode ? o.total : o.subtotal || 0), 0);
     return { count: orders.length, revenue };
   }, [orders]);
 
@@ -415,9 +476,21 @@ export default function SansiroAdmin() {
             <span className="font-mono">{money(it.price * it.qty)}</span>
           </div>
         ))}
+        {o.promoCode && (
+          <>
+            <div className="flex justify-between text-xs pt-1" style={{ color: "var(--ink-soft)" }}>
+              <span>Oraliq summa</span>
+              <span className="font-mono">{money(o.subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-xs" style={{ color: "var(--gold)" }}>
+              <span>Promo ({o.promoCode})</span>
+              <span className="font-mono">-{money(o.discountAmount)}</span>
+            </div>
+          </>
+        )}
         <div className="flex justify-between text-sm mt-2 font-medium">
           <span>Jami</span>
-          <span className="font-mono">{money(o.subtotal)}</span>
+          <span className="font-mono">{money(o.promoCode ? o.total : o.subtotal)}</span>
         </div>
       </div>
     </div>
@@ -482,6 +555,9 @@ export default function SansiroAdmin() {
           </button>
           <button onClick={() => setTab("messages")} className={`tab ${tab === "messages" ? "active" : ""}`}>
             XABARLAR ({messages.length})
+          </button>
+          <button onClick={() => setTab("promo")} className={`tab ${tab === "promo" ? "active" : ""}`}>
+            PROMO-KODLAR ({promoCodes.length})
           </button>
         </div>
 
@@ -702,6 +778,76 @@ export default function SansiroAdmin() {
                     </div>
                     <div className="font-mono text-xs mb-2" style={{ color: "var(--gold)" }}>{m.contact}</div>
                     <p className="text-sm">{m.message}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "promo" && (
+          <div className="max-w-3xl fade-in pb-10">
+            <form onSubmit={submitPromoDraft} className="card p-6 mb-8">
+              <div className="eyebrow mb-1">Yangi kod</div>
+              <p className="font-display text-xl mb-5">Promo-kod yaratish</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input
+                  className="input px-3 py-2 text-sm font-mono uppercase"
+                  placeholder="KOD (masalan: YANGI10)"
+                  value={promoDraft.code}
+                  onChange={(e) => setPromoDraft({ ...promoDraft, code: e.target.value })}
+                />
+                <input
+                  className="input px-3 py-2 text-sm"
+                  placeholder="Chegirma foizi (masalan: 10)"
+                  inputMode="numeric"
+                  value={promoDraft.discountPercent}
+                  onChange={(e) => setPromoDraft({ ...promoDraft, discountPercent: e.target.value.replace(/[^0-9]/g, "") })}
+                />
+                <input
+                  className="input px-3 py-2 text-sm font-mono"
+                  placeholder="Minimal xarid summasi"
+                  inputMode="numeric"
+                  value={promoDraft.minOrderAmount}
+                  onChange={(e) => setPromoDraft({ ...promoDraft, minOrderAmount: e.target.value.replace(/[^0-9]/g, "") })}
+                />
+              </div>
+              {promoError && <p className="text-xs mt-3" style={{ color: "var(--danger)" }}>{promoError}</p>}
+              <button type="submit" disabled={promoSaving} className="btn-ink px-6 py-2 text-sm tracking-wide mt-4">
+                {promoSaving ? "SAQLANMOQDA..." : "KOD QO'SHISH"}
+              </button>
+            </form>
+
+            {!promoCodesLoaded ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Yuklanmoqda...</p>
+            ) : promoCodes.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Hali promo-kod yo'q.</p>
+            ) : (
+              <div className="card divide-y" style={{ borderColor: "var(--line)" }}>
+                {promoCodes.map((p) => (
+                  <div key={p.code} className="list-row flex items-center justify-between gap-4 px-4 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
+                    <div>
+                      <div className="font-mono text-base" style={{ color: "var(--gold)" }}>{p.code}</div>
+                      <div className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>
+                        -{p.discountPercent}% &middot; {money(p.minOrderAmount)}dan yuqori xaridlarga
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span
+                        className="status-pill"
+                        style={p.active
+                          ? { color: "var(--ok)", borderColor: "var(--ok)", background: "rgba(63,107,74,0.08)" }
+                          : { color: "var(--ink-soft)", borderColor: "var(--line)" }}
+                      >
+                        {p.active ? "FAOL" : "O'CHIRILGAN"}
+                      </span>
+                      <button onClick={() => togglePromoActive(p.code)} className="btn-ghost px-3 py-1.5 text-xs">
+                        {p.active ? "O'CHIRISH" : "YOQISH"}
+                      </button>
+                      <button onClick={() => deletePromoCode(p.code)} className="btn-danger px-3 py-1.5 text-xs">
+                        O'CHIRIB TASHLASH
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
