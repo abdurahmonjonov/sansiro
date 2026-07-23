@@ -141,11 +141,9 @@ function Crown({ size = 20, color = "var(--ink)" }) {
   );
 }
 
-const CATEGORIES = ["Ayollar", "Erkaklar", "Aksessuar"];
+const CATEGORIES = ["Erkaklar", "Aksessuar"];
 
 const STARTER_PRODUCTS = [
-  { id: "p1", name: "Ipak ko'ylak", category: "Ayollar", price: 1450000, sizes: ["XS", "S", "M", "L"] },
-  { id: "p2", name: "Yun palto", category: "Ayollar", price: 3200000, sizes: ["S", "M", "L"] },
   { id: "p3", name: "Klassik kostyum", category: "Erkaklar", price: 4100000, sizes: ["48", "50", "52", "54"] },
   { id: "p4", name: "Kashmir sviter", category: "Erkaklar", price: 1890000, sizes: ["M", "L", "XL"] },
   { id: "p5", name: "Ipak sharf", category: "Aksessuar", price: 620000, sizes: ["Bir xil o'lcham"] },
@@ -159,7 +157,7 @@ const ADMIN_PIN = "2024"; // O'zgartirish uchun shu qatorni tahrirlang
 
 const money = (n) => new Intl.NumberFormat("uz-UZ").format(Math.round(n)) + " so'm";
 
-const emptyDraft = { name: "", category: "Ayollar", price: "", sizes: "", colors: "", images: [], description: "" };
+const emptyDraft = { name: "", category: "Erkaklar", price: "", sizes: "", colors: "", images: [], description: "" };
 
 function resizeImageToBase64(file, maxWidth = 900, quality = 0.75) {
   return new Promise((resolve, reject) => {
