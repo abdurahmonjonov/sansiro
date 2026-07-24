@@ -20,6 +20,8 @@ const STYLES = `
   color: var(--ink);
   font-family: 'Jost', sans-serif;
   min-height: 100%;
+  overflow-x: hidden;
+  width: 100%;
 }
 .font-display { font-family: 'Bodoni Moda', serif; }
 .font-mono { font-family: 'IBM Plex Mono', monospace; }
@@ -46,11 +48,13 @@ const STYLES = `
 }
 
 .tab-bar {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   gap: 2px;
   background: var(--paper-deep);
   padding: 4px;
   border: 1px solid var(--line);
+  width: 100%;
 }
 .tab {
   padding: 8px 18px;
@@ -59,11 +63,16 @@ const STYLES = `
   font-size: 12px;
   letter-spacing: 0.04em;
   transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  flex: 1 1 auto;
 }
 .tab.active {
   background: var(--paper);
   color: var(--ink);
   box-shadow: 0 1px 3px rgba(32,28,22,0.10);
+}
+@media (max-width: 640px) {
+  .tab { padding: 8px 10px; font-size: 10.5px; flex: 1 1 30%; text-align: center; }
 }
 .tab:not(.active):hover {
   color: var(--ink);
