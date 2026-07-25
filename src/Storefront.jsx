@@ -221,6 +221,26 @@ const STYLES = `
   to { opacity: 1; transform: translateY(0); }
 }
 
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--paper-deep);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+}
+
 .modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(32,28,22,0.45);
@@ -326,6 +346,51 @@ function StarPicker({ value, onChange }) {
   );
 }
 
+function ShieldIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3 4 6v6c0 4.4 3.2 8.2 8 9 4.8-.8 8-4.6 8-9V6l-8-3Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M8.5 12.2 11 14.7l4.5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TruckIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1.5" y="7" width="12" height="9" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M13.5 10h4l3 3v3h-7v-6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <circle cx="6" cy="18.5" r="1.8" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="17" cy="18.5" r="1.8" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function AwardIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="9" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M9 13.5 7.5 21l4.5-2.2L16.5 21 15 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TrustBadges({ className = "", paymentLabel, deliveryLabel, qualityLabel }) {
+  return (
+    <div className={`flex items-center justify-center gap-6 md:gap-10 flex-wrap ${className}`}>
+      <span className="flex items-center gap-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+        <ShieldIcon size={16} /> {paymentLabel}
+      </span>
+      <span className="flex items-center gap-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+        <TruckIcon size={16} /> {deliveryLabel}
+      </span>
+      <span className="flex items-center gap-2 text-xs" style={{ color: "var(--ink-soft)" }}>
+        <AwardIcon size={16} /> {qualityLabel}
+      </span>
+    </div>
+  );
+}
+
 function TelegramIcon({ size = 18 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -388,7 +453,7 @@ const TRANSLATIONS = {
     order_details: "Buyurtma ma'lumotlari", order_confirmed: "Buyurtma qabul qilindi", close: "YOPISH",
     thank_you: "Rahmat", order_number_label: "Buyurtmangiz raqami:", will_call: "Tez orada operatorimiz sizga qo'ng'iroq qilib, buyurtmani tasdiqlaydi.",
     login_register_title: "Kirish / Ro'yxatdan o'tish",
-    payment_method_label: "To'lov usuli", cash_label: "Naqd pul", card_label: "Karta orqali", similar_products: "Shunga o'xshash mahsulotlar"
+    payment_method_label: "To'lov usuli", cash_label: "Naqd pul", card_label: "Karta orqali", similar_products: "Shunga o'xshash mahsulotlar", trust_payment: "Xavfsiz to'lov", trust_delivery: "Tez yetkazib berish", trust_quality: "Sifat kafolati"
   },
   ru: {
     nav_catalog: "Каталог", nav_about: "О нас", nav_contact: "Контакты", nav_admin: "Админ-панель",
@@ -413,7 +478,7 @@ const TRANSLATIONS = {
     order_details: "Данные заказа", order_confirmed: "Заказ принят", close: "ЗАКРЫТЬ",
     thank_you: "Спасибо", order_number_label: "Номер вашего заказа:", will_call: "Наш оператор скоро позвонит вам и подтвердит заказ.",
     login_register_title: "Вход / Регистрация",
-    payment_method_label: "Способ оплаты", cash_label: "Наличными", card_label: "Картой", similar_products: "Похожие товары"
+    payment_method_label: "Способ оплаты", cash_label: "Наличными", card_label: "Картой", similar_products: "Похожие товары", trust_payment: "Безопасная оплата", trust_delivery: "Быстрая доставка", trust_quality: "Гарантия качества"
   },
   en: {
     nav_catalog: "Catalog", nav_about: "About", nav_contact: "Contact", nav_admin: "Admin panel",
@@ -438,7 +503,7 @@ const TRANSLATIONS = {
     order_details: "Order details", order_confirmed: "Order confirmed", close: "CLOSE",
     thank_you: "Thank you", order_number_label: "Your order number:", will_call: "Our operator will call you shortly to confirm the order.",
     login_register_title: "Sign in / Register",
-    payment_method_label: "Payment method", cash_label: "Cash", card_label: "Card", similar_products: "Similar products"
+    payment_method_label: "Payment method", cash_label: "Cash", card_label: "Card", similar_products: "Similar products", trust_payment: "Secure payment", trust_delivery: "Fast delivery", trust_quality: "Quality guarantee"
   },
 };
 
@@ -474,6 +539,7 @@ export default function Sansiro() {
   const [cart, setCart] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
   const [products, setProducts] = useState([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [panel, setPanel] = useState("none"); // none | cart | auth
   const [policyView, setPolicyView] = useState(null); // null | "return" | "privacy"
   const [checkoutStep, setCheckoutStep] = useState("cart"); // cart | form | confirmed
@@ -555,6 +621,8 @@ export default function Sansiro() {
         }
       } catch (e) {
         setProducts([]);
+      } finally {
+        setProductsLoaded(true);
       }
     })();
     (async () => {
@@ -658,7 +726,35 @@ export default function Sansiro() {
   }, [currentPath, products]);
 
   useEffect(() => {
-    document.title = selectedProduct ? `${selectedProduct.name} — SANSIRO` : "SANSIRO — Hashamatli kiyimlar";
+    const setMeta = (selector, attr, content) => {
+      let el = document.querySelector(selector);
+      if (!el) {
+        el = document.createElement("meta");
+        const [, attrName, attrValue] = selector.match(/\[(.+?)="(.+?)"\]/) || [];
+        if (attrName) el.setAttribute(attrName, attrValue);
+        document.head.appendChild(el);
+      }
+      el.setAttribute(attr, content);
+    };
+
+    if (selectedProduct) {
+      const desc = selectedProduct.description
+        ? selectedProduct.description.slice(0, 155)
+        : `${selectedProduct.name} — SANSIRO hashamatli kiyimlar kolleksiyasidan, ${money(selectedProduct.price)}.`;
+      document.title = `${selectedProduct.name} — SANSIRO`;
+      setMeta('meta[name="description"]', "content", desc);
+      setMeta('meta[property="og:title"]', "content", `${selectedProduct.name} — SANSIRO`);
+      setMeta('meta[property="og:description"]', "content", desc);
+      if (selectedProduct.image) setMeta('meta[property="og:image"]', "content", selectedProduct.image);
+      setMeta('meta[property="og:type"]', "content", "product");
+    } else {
+      document.title = "SANSIRO — Hashamatli kiyimlar, EST. 2024";
+      setMeta('meta[name="description"]', "content", "SANSIRO — cheklangan seriyadagi, qo'lda ishlangan hashamatli kiyimlar. Erkaklar uchun klassik va zamonaviy kolleksiya.");
+      setMeta('meta[property="og:title"]', "content", "SANSIRO — Hashamatli kiyimlar");
+      setMeta('meta[property="og:description"]', "content", "Cheklangan seriyadagi, qo'lda ishlangan hashamatli kiyimlar. EST. 2024.");
+      setMeta('meta[property="og:image"]', "content", "/og-image.jpg");
+      setMeta('meta[property="og:type"]', "content", "website");
+    }
   }, [selectedProduct]);
 
   const loadReviews = async (productId) => {
@@ -1032,6 +1128,17 @@ export default function Sansiro() {
     </div>
   );
 
+  const renderProductSkeleton = (i) => (
+    <div key={`sk-${i}`} className="tag-card" style={{ paddingTop: 30 }}>
+      <div className="skeleton aspect-square mx-3 mb-4" />
+      <div className="px-3 md:px-4 pb-4">
+        <div className="skeleton" style={{ height: 10, width: "40%", marginBottom: 8 }} />
+        <div className="skeleton" style={{ height: 14, width: "80%", marginBottom: 8 }} />
+        <div className="skeleton" style={{ height: 12, width: "50%" }} />
+      </div>
+    </div>
+  );
+
   const wishlistProducts = products.filter((p) => wishlist.includes(p.id));
 
   const submitContactMessage = async (e) => {
@@ -1067,6 +1174,12 @@ export default function Sansiro() {
     setContactSent(true);
     setContactForm({ name: "", contact: "", message: "" });
   };
+
+  const KNOWN_PATHS = ["/", "/katalog"];
+  const is404 =
+    productsLoaded &&
+    ((currentPath.startsWith("/product/") && !selectedProduct) ||
+      (!KNOWN_PATHS.includes(currentPath) && !currentPath.startsWith("/product/")));
 
   return (
     <div className="sansiro-root min-h-screen">
@@ -1194,7 +1307,18 @@ export default function Sansiro() {
         </div>
       </nav>
 
-      {selectedProduct ? (() => {
+      {is404 ? (
+        <section className="px-5 py-24 text-center max-w-md mx-auto fade-in">
+          <Crown size={30} />
+          <p className="font-display text-3xl mt-5">404</p>
+          <p className="text-sm mt-3" style={{ color: "var(--ink-soft)" }}>
+            Kechirasiz, siz qidirgan sahifa topilmadi.
+          </p>
+          <button onClick={() => navigateTo("/")} className="btn-ink px-8 py-3 text-xs tracking-wider mt-8">
+            {t("back_to_home").replace("\u2190 ", "")}
+          </button>
+        </section>
+      ) : selectedProduct ? (() => {
         const galleryImages =
           selectedProduct.images && selectedProduct.images.length > 0
             ? selectedProduct.images
@@ -1317,6 +1441,13 @@ export default function Sansiro() {
                   {t("add_to_cart")}
                 </button>
 
+                <TrustBadges
+                  className="mt-6"
+                  paymentLabel={t("trust_payment")}
+                  deliveryLabel={t("trust_delivery")}
+                  qualityLabel={t("trust_quality")}
+                />
+
                 <div className="mt-10 pt-6" style={{ borderTop: "1px solid var(--line)" }}>
                   <div className="font-display text-lg mb-4">{t("reviews_title")}</div>
 
@@ -1420,7 +1551,11 @@ export default function Sansiro() {
             </p>
           )}
 
-          {filteredProducts.length === 0 ? (
+          {!productsLoaded ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(renderProductSkeleton)}
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <p className="text-center text-sm py-10" style={{ color: "var(--ink-soft)" }}>
               {t("no_results")}
             </p>
@@ -1455,6 +1590,13 @@ export default function Sansiro() {
         >
           {t("hero_cta")}
         </button>
+
+        <TrustBadges
+          className="mt-12 hero-anim"
+          paymentLabel={t("trust_payment")}
+          deliveryLabel={t("trust_delivery")}
+          qualityLabel={t("trust_quality")}
+        />
       </header>
 
       {/* Ticker */}
@@ -1481,7 +1623,11 @@ export default function Sansiro() {
           <hr className="hairline" />
         </div>
 
-        {homeProducts.length === 0 ? (
+        {!productsLoaded ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
+            {[0, 1, 2, 3, 4, 5].map(renderProductSkeleton)}
+          </div>
+        ) : homeProducts.length === 0 ? (
           <p className="text-center text-sm py-10" style={{ color: "var(--ink-soft)" }}>
             Tez orada yangi mahsulotlar qo'shiladi.
           </p>
