@@ -376,6 +376,23 @@ export default function SansiroAdmin() {
     await saveOrders(updated);
   };
 
+  const [confirmClearOrders, setConfirmClearOrders] = useState(false);
+
+  useEffect(() => {
+    if (!confirmClearOrders) return;
+    const timer = setTimeout(() => setConfirmClearOrders(false), 5000);
+    return () => clearTimeout(timer);
+  }, [confirmClearOrders]);
+
+  const clearAllOrders = async () => {
+    if (!confirmClearOrders) {
+      setConfirmClearOrders(true);
+      return;
+    }
+    await saveOrders([]);
+    setConfirmClearOrders(false);
+  };
+
   const savePromoCodes = async (list) => {
     setPromoCodes(list);
     try {
@@ -696,7 +713,7 @@ export default function SansiroAdmin() {
                 ) : (
                 <div className="card divide-y" style={{ borderColor: "var(--line)" }}>
                 {filteredProducts.map((p) => (
-                  <div key={p.id} className="list-row flex items-center justify-between gap-4 px-4 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
+                  <div key={p.id} className="list-row flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
                     <div className="flex items-center gap-3 min-w-0">
                       {p.image ? (
                         <img
@@ -715,7 +732,7 @@ export default function SansiroAdmin() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-2 flex-wrap">
                       <button onClick={() => startEdit(p)} className="btn-ghost px-3 py-1.5 text-xs">TAHRIRLASH</button>
                       <button onClick={() => deleteProduct(p.id)} className="btn-danger px-3 py-1.5 text-xs">O'CHIRISH</button>
                     </div>
@@ -730,15 +747,22 @@ export default function SansiroAdmin() {
 
         {tab === "orders" && (
           <div className="max-w-4xl fade-in pb-10">
-            <div className="grid grid-cols-2 gap-4 mb-8 max-w-md">
-              <div className="stat-card p-5">
-                <div className="eyebrow">Jami buyurtmalar</div>
-                <div className="font-display text-3xl mt-2">{stats.count}</div>
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+              <div className="grid grid-cols-2 gap-4 max-w-md flex-1">
+                <div className="stat-card p-5">
+                  <div className="eyebrow">Jami buyurtmalar</div>
+                  <div className="font-display text-3xl mt-2">{stats.count}</div>
+                </div>
+                <div className="stat-card p-5">
+                  <div className="eyebrow">Umumiy summa</div>
+                  <div className="font-mono text-xl mt-2">{money(stats.revenue)}</div>
+                </div>
               </div>
-              <div className="stat-card p-5">
-                <div className="eyebrow">Umumiy summa</div>
-                <div className="font-mono text-xl mt-2">{money(stats.revenue)}</div>
-              </div>
+              {orders.length > 0 && (
+                <button onClick={clearAllOrders} className="btn-danger px-4 py-2 text-xs tracking-wide whitespace-nowrap">
+                  {confirmClearOrders ? "ISHONCHINGIZ KOMILMI? YANA BOSING" : "HAMMASINI TOZALASH"}
+                </button>
+              )}
             </div>
 
             {!ordersLoaded ? (
@@ -832,14 +856,14 @@ export default function SansiroAdmin() {
             ) : (
               <div className="card divide-y" style={{ borderColor: "var(--line)" }}>
                 {promoCodes.map((p) => (
-                  <div key={p.code} className="list-row flex items-center justify-between gap-4 px-4 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
+                  <div key={p.code} className="list-row flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
                     <div>
                       <div className="font-mono text-base" style={{ color: "var(--gold)" }}>{p.code}</div>
                       <div className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>
                         -{p.discountPercent}% &middot; {money(p.minOrderAmount)}dan yuqori xaridlarga
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className="status-pill"
                         style={p.active
