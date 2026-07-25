@@ -138,6 +138,15 @@ select.input { background: var(--paper); }
 .fade-in { animation: admin-fade 0.3s ease-out; }
 @keyframes admin-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(32,28,22,0.45);
+  z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.modal-fade { animation: admin-fade 0.2s ease-out; }
+
 *:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 `;
 
@@ -378,17 +387,7 @@ export default function SansiroAdmin() {
 
   const [confirmClearOrders, setConfirmClearOrders] = useState(false);
 
-  useEffect(() => {
-    if (!confirmClearOrders) return;
-    const timer = setTimeout(() => setConfirmClearOrders(false), 5000);
-    return () => clearTimeout(timer);
-  }, [confirmClearOrders]);
-
   const clearAllOrders = async () => {
-    if (!confirmClearOrders) {
-      setConfirmClearOrders(true);
-      return;
-    }
     await saveOrders([]);
     setConfirmClearOrders(false);
   };
@@ -759,8 +758,8 @@ export default function SansiroAdmin() {
                 </div>
               </div>
               {orders.length > 0 && (
-                <button onClick={clearAllOrders} className="btn-danger px-4 py-2 text-xs tracking-wide whitespace-nowrap">
-                  {confirmClearOrders ? "ISHONCHINGIZ KOMILMI? YANA BOSING" : "HAMMASINI TOZALASH"}
+                <button onClick={() => setConfirmClearOrders(true)} className="btn-danger px-4 py-2 text-xs tracking-wide whitespace-nowrap">
+                  HAMMASINI TOZALASH
                 </button>
               )}
             </div>
@@ -886,6 +885,37 @@ export default function SansiroAdmin() {
           </div>
         )}
       </div>
+
+      {confirmClearOrders && (
+        <div className="modal-backdrop" onClick={() => setConfirmClearOrders(false)}>
+          <div
+            className="modal-fade max-w-sm w-full p-6"
+            style={{ background: "var(--paper)", border: "1px solid var(--line)", position: "relative" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setConfirmClearOrders(false)}
+              aria-label="Yopish"
+              className="text-lg"
+              style={{ position: "absolute", top: 14, right: 16, color: "var(--ink-soft)" }}
+            >
+              &times;
+            </button>
+            <div className="font-display text-lg mb-2">Hammasini tozalash</div>
+            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+              Barcha buyurtmalar (faol va yakunlangan) butunlay o'chiriladi. Bu amalni ortga qaytarib bo'lmaydi.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setConfirmClearOrders(false)} className="btn-ghost flex-1 py-2.5 text-xs tracking-wide">
+                ORQAGA
+              </button>
+              <button onClick={clearAllOrders} className="btn-danger flex-1 py-2.5 text-xs tracking-wide">
+                O'CHIRISH
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
