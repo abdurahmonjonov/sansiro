@@ -161,12 +161,6 @@ function Crown({ size = 20, color = "var(--ink)" }) {
 
 const CATEGORIES = ["Erkaklar", "Aksessuar"];
 
-const STARTER_PRODUCTS = [
-  { id: "p3", name: "Klassik kostyum", category: "Erkaklar", price: 4100000, sizes: ["48", "50", "52", "54"] },
-  { id: "p4", name: "Kashmir sviter", category: "Erkaklar", price: 1890000, sizes: ["M", "L", "XL"] },
-  { id: "p5", name: "Ipak sharf", category: "Aksessuar", price: 620000, sizes: ["Bir xil o'lcham"] },
-  { id: "p6", name: "Charm kamar", category: "Aksessuar", price: 540000, sizes: ["90", "95", "100"] },
-];
 const PRODUCTS_KEY = "sansiro:products";
 const ORDERS_KEY = "sansiro:orders";
 const MESSAGES_KEY = "sansiro:messages";
@@ -690,11 +684,7 @@ export default function SansiroAdmin() {
               <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Yuklanmoqda...</p>
             ) : products.length === 0 ? (
               <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-                Hali mahsulot yo'q. Yuqoridagi shakl orqali qo'shing, yoki{" "}
-                <button onClick={() => saveProducts(STARTER_PRODUCTS)} className="underline">
-                  namuna katalogni yuklang
-                </button>{" "}
-                (keyin tahrirlashingiz mumkin).
+                Hali mahsulot yo'q. Yuqoridagi shakl orqali qo'shing.
               </p>
             ) : (
               <>
