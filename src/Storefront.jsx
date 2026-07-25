@@ -459,15 +459,6 @@ function colorToHex(name) {
   return COLOR_HEX[(name || "").trim().toLowerCase()] || null;
 }
 
-const PRODUCTS = [
-  { id: "p3", name: "Klassik kostyum", category: "Erkaklar", price: 4100000, sizes: ["48", "50", "52", "54"] },
-  { id: "p4", name: "Kashmir sviter", category: "Erkaklar", price: 1890000, sizes: ["M", "L", "XL"] },
-  { id: "p5", name: "Ipak sharf", category: "Aksessuar", price: 620000, sizes: ["Bir xil o'lcham"] },
-  { id: "p6", name: "Charm kamar", category: "Aksessuar", price: 540000, sizes: ["90", "95", "100"] },
-  { id: "p7", name: "Lineya ko'ylak", category: "Erkaklar", price: 980000, sizes: ["S", "M", "L", "XL"] },
-  { id: "p9", name: "Ipak galstuk", category: "Aksessuar", price: 410000, sizes: ["Bir xil o'lcham"] },
-];
-
 const money = (n) => new Intl.NumberFormat("uz-UZ").format(Math.round(n)) + " so'm";
 
 const CART_KEY = "sansiro:cart";
@@ -482,7 +473,7 @@ const REVIEWS_KEY = "sansiro:reviews";
 export default function Sansiro() {
   const [cart, setCart] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
-  const [products, setProducts] = useState(PRODUCTS);
+  const [products, setProducts] = useState([]);
   const [panel, setPanel] = useState("none"); // none | cart | auth
   const [policyView, setPolicyView] = useState(null); // null | "return" | "privacy"
   const [checkoutStep, setCheckoutStep] = useState("cart"); // cart | form | confirmed
@@ -558,15 +549,12 @@ export default function Sansiro() {
         const result = await window.storage.get(PRODUCTS_KEY, true);
         if (result && result.value) {
           const stored = JSON.parse(result.value);
-          setProducts(stored.length > 0 ? stored : PRODUCTS);
+          setProducts(stored);
         } else {
-          // Shared catalog is empty (admin hasn't added anything yet) — show the
-          // built-in placeholder catalog for display only, without saving it to
-          // shared storage, so it never shows up as "real" products in the admin panel.
-          setProducts(PRODUCTS);
+          setProducts([]);
         }
       } catch (e) {
-        setProducts(PRODUCTS);
+        setProducts([]);
       }
     })();
     (async () => {
@@ -1493,9 +1481,15 @@ export default function Sansiro() {
           <hr className="hairline" />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
-          {homeProducts.map(renderProductCard)}
-        </div>
+        {homeProducts.length === 0 ? (
+          <p className="text-center text-sm py-10" style={{ color: "var(--ink-soft)" }}>
+            Tez orada yangi mahsulotlar qo'shiladi.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
+            {homeProducts.map(renderProductCard)}
+          </div>
+        )}
 
         {products.length > HOME_PRODUCT_LIMIT && (
           <div className="text-center mt-10">
