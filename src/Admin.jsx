@@ -400,6 +400,13 @@ export default function SansiroAdmin() {
     if (editingId === id) cancelEdit();
   };
 
+  const toggleProductStock = async (id) => {
+    const updated = products.map((p) =>
+      p.id === id ? { ...p, inStock: p.inStock === false ? true : false } : p
+    );
+    await saveProducts(updated);
+  };
+
   const updateOrderStatus = async (orderNumber, status) => {
     const updated = orders.map((o) => (o.orderNumber === orderNumber ? { ...o, status } : o));
     await saveOrders(updated);
@@ -747,7 +754,17 @@ export default function SansiroAdmin() {
                         <div style={{ width: 44, height: 44, flexShrink: 0, background: "var(--paper-deep)", border: "1px solid var(--line)" }} />
                       )}
                       <div className="min-w-0">
-                        <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{p.category}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{p.category}</div>
+                          {p.inStock === false && (
+                            <span
+                              className="status-pill"
+                              style={{ color: "var(--danger)", borderColor: "var(--danger)", background: "rgba(142,59,59,0.08)" }}
+                            >
+                              STOKDA YO'Q
+                            </span>
+                          )}
+                        </div>
                         <div className="font-display text-base truncate">{p.name}</div>
                         <div className="font-mono text-xs mt-1" style={{ color: "var(--gold)" }}>
                           {money(p.price)} &middot; {p.sizes.join(", ")}
@@ -755,6 +772,9 @@ export default function SansiroAdmin() {
                       </div>
                     </div>
                     <div className="flex gap-2 flex-wrap">
+                      <button onClick={() => toggleProductStock(p.id)} className="btn-ghost px-3 py-1.5 text-xs">
+                        {p.inStock === false ? "STOKKA QAYTARISH" : "STOKDA YO'Q DEB BELGILASH"}
+                      </button>
                       <button onClick={() => startEdit(p)} className="btn-ghost px-3 py-1.5 text-xs">TAHRIRLASH</button>
                       <button onClick={() => deleteProduct(p.id)} className="btn-danger px-3 py-1.5 text-xs">O'CHIRISH</button>
                     </div>
