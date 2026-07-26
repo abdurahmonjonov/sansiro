@@ -221,6 +221,31 @@ const STYLES = `
   to { opacity: 1; transform: translateY(0); }
 }
 
+.upload-square {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border: 1.5px dashed var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 300;
+  background: var(--paper-deep);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.upload-square:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--paper);
+}
+.upload-square:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .skeleton {
   position: relative;
   overflow: hidden;
@@ -554,7 +579,9 @@ export default function Sansiro() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
-  const [reviewForm, setReviewForm] = useState({ name: "", rating: 5, comment: "" });
+  const [reviewForm, setReviewForm] = useState({ name: "", rating: 5, comment: "", images: [] });
+  const [reviewImageProcessing, setReviewImageProcessing] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
   const [reviewError, setReviewError] = useState(null);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "", notes: "", paymentMethod: "naqd" });
@@ -562,6 +589,7 @@ export default function Sansiro() {
   const [lastOrderNumber, setLastOrderNumber] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const catalogRef = useRef(null);
+  const reviewFileInputRef = useRef(null);
 
   // Auth / registration state
   const [profile, setProfile] = useState(null);
@@ -720,7 +748,7 @@ export default function Sansiro() {
     setSelectedSize(product.sizes[0]);
     setSelectedColor(product.colors && product.colors.length > 0 ? product.colors[0] : null);
     setSelectedImageIndex(0);
-    setReviewForm({ name: "", rating: 5, comment: "" });
+    setReviewForm({ name: "", rating: 5, comment: "", images: [] });
     setReviewError(null);
     loadReviews(product.id);
   }, [currentPath, products]);
@@ -770,6 +798,48 @@ export default function Sansiro() {
     }
   };
 
+  function resizeImageToBase64(file, maxWidth = 700, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Faylni o'qib bo'lmadi"));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error("Rasmni ochib bo'lmadi"));
+        img.onload = () => {
+          const scale = Math.min(1, maxWidth / img.width);
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const handleReviewImageChange = async (e) => {
+    const files = Array.from(e.target.files || []).slice(0, 3 - reviewForm.images.length);
+    if (files.length === 0) return;
+    setReviewImageProcessing(true);
+    setReviewError(null);
+    try {
+      const resized = await Promise.all(files.map((f) => resizeImageToBase64(f)));
+      setReviewForm((f) => ({ ...f, images: [...f.images, ...resized] }));
+    } catch (err) {
+      setReviewError("Rasm yuklashda xatolik yuz berdi.");
+    } finally {
+      setReviewImageProcessing(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeReviewImage = (index) => {
+    setReviewForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
+  };
+
   const submitReview = async (e) => {
     e.preventDefault();
     if (!reviewForm.name.trim() || !reviewForm.comment.trim()) {
@@ -784,6 +854,7 @@ export default function Sansiro() {
       name: reviewForm.name.trim(),
       rating: reviewForm.rating,
       comment: reviewForm.comment.trim(),
+      images: reviewForm.images,
       createdAt: new Date().toISOString(),
     };
     try {
@@ -802,7 +873,7 @@ export default function Sansiro() {
       setReviewError("Sharhni saqlashda xatolik yuz berdi.");
     } finally {
       setReviewSubmitting(false);
-      setReviewForm({ name: "", rating: 5, comment: "" });
+      setReviewForm({ name: "", rating: 5, comment: "", images: [] });
     }
   };
 
@@ -1464,6 +1535,15 @@ export default function Sansiro() {
                             <StarRating value={r.rating} size={12} />
                           </div>
                           <p className="mt-1" style={{ color: "var(--ink-soft)" }}>{r.comment}</p>
+                          {r.images && r.images.length > 0 && (
+                            <div className="flex gap-2 mt-2">
+                              {r.images.map((img, i) => (
+                                <button key={i} onClick={() => setLightboxImage(img)} style={{ width: 56, height: 56, flexShrink: 0 }}>
+                                  <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", border: "1px solid var(--line)" }} />
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1487,6 +1567,44 @@ export default function Sansiro() {
                       value={reviewForm.comment}
                       onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                     />
+                    <div className="flex gap-2 flex-wrap items-center">
+                      {reviewForm.images.map((img, i) => (
+                        <div key={i} className="relative">
+                          <img src={img} alt="" style={{ width: 56, height: 56, objectFit: "cover", border: "1px solid var(--line)" }} />
+                          <button
+                            type="button"
+                            onClick={() => removeReviewImage(i)}
+                            className="absolute"
+                            style={{ top: -6, right: -6, background: "var(--ink)", color: "var(--paper)", borderRadius: "999px", width: 16, height: 16, fontSize: 10, lineHeight: "16px" }}
+                            aria-label="Rasmni olib tashlash"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ))}
+                      {reviewForm.images.length < 3 && (
+                        <button
+                          type="button"
+                          onClick={() => reviewFileInputRef.current?.click()}
+                          disabled={reviewImageProcessing}
+                          className="upload-square"
+                          aria-label="Rasm qo'shish"
+                        >
+                          +
+                        </button>
+                      )}
+                      <input
+                        ref={reviewFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleReviewImageChange}
+                        style={{ display: "none" }}
+                      />
+                    </div>
+                    {reviewImageProcessing && (
+                      <p className="text-xs" style={{ color: "var(--ink-soft)" }}>Rasm yuklanmoqda...</p>
+                    )}
                     {reviewError && <p className="text-xs" style={{ color: "var(--danger)" }}>{reviewError}</p>}
                     <button type="submit" disabled={reviewSubmitting} className="btn-ghost py-2 text-xs tracking-wide self-start px-5">
                       {reviewSubmitting ? t("sending") : t("submit_review")}
@@ -1805,6 +1923,20 @@ export default function Sansiro() {
           &copy; 2026 SANSIRO. {t("all_rights")}
         </p>
       </footer>
+
+      {lightboxImage && (
+        <div className="modal-backdrop" onClick={() => setLightboxImage(null)}>
+          <div className="fade-in max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxImage} alt="" style={{ width: "100%", height: "auto", display: "block" }} />
+            <button
+              onClick={() => setLightboxImage(null)}
+              className="btn-ink w-full py-2.5 text-xs tracking-wide"
+            >
+              YOPISH
+            </button>
+          </div>
+        </div>
+      )}
 
       {policyView && (
         <div className="modal-backdrop" onClick={() => setPolicyView(null)}>
