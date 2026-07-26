@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 
 const STYLES = `
 @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,600;1,6..96,400&family=Jost:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
@@ -32,6 +32,31 @@ const STYLES = `
   letter-spacing: 0.12em;
   color: var(--ink-soft);
   text-transform: uppercase;
+}
+
+.upload-square {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border: 1.5px dashed var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 300;
+  background: var(--paper-deep);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.upload-square:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--paper);
+}
+.upload-square:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .card {
@@ -213,6 +238,7 @@ export default function SansiroAdmin() {
   const [promoSaving, setPromoSaving] = useState(false);
 
   const [draft, setDraft] = useState(emptyDraft);
+  const productFileInputRef = useRef(null);
   const [editingId, setEditingId] = useState(null);
   const [formError, setFormError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -627,41 +653,48 @@ export default function SansiroAdmin() {
                   <label className="text-xs block mb-2" style={{ color: "var(--ink-soft)" }}>
                     Mahsulot rasmlari (bir nechtasini tanlashingiz mumkin)
                   </label>
-                  {draft.images.length > 0 && (
-                    <div className="flex gap-2 flex-wrap mb-3">
-                      {draft.images.map((img, i) => (
-                        <div key={i} className="relative">
-                          <img
-                            src={img}
-                            alt={`Rasm ${i + 1}`}
-                            style={{ width: 64, height: 64, objectFit: "cover", border: i === 0 ? "2px solid var(--gold)" : "1px solid var(--line)" }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeDraftImage(i)}
-                            className="absolute"
-                            style={{ top: -6, right: -6, background: "var(--ink)", color: "var(--paper)", borderRadius: "999px", width: 18, height: 18, fontSize: 11, lineHeight: "18px" }}
-                            aria-label="Rasmni olib tashlash"
-                          >
-                            &times;
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageChange}
-                    disabled={imageProcessing}
-                    className="text-xs"
-                  />
+                  <div className="flex gap-2 flex-wrap items-center">
+                    {draft.images.map((img, i) => (
+                      <div key={i} className="relative">
+                        <img
+                          src={img}
+                          alt={`Rasm ${i + 1}`}
+                          style={{ width: 64, height: 64, objectFit: "cover", border: i === 0 ? "2px solid var(--gold)" : "1px solid var(--line)" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeDraftImage(i)}
+                          className="absolute"
+                          style={{ top: -6, right: -6, background: "var(--ink)", color: "var(--paper)", borderRadius: "999px", width: 18, height: 18, fontSize: 11, lineHeight: "18px" }}
+                          aria-label="Rasmni olib tashlash"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => productFileInputRef.current?.click()}
+                      disabled={imageProcessing}
+                      className="upload-square"
+                      aria-label="Rasm qo'shish"
+                    >
+                      +
+                    </button>
+                    <input
+                      ref={productFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageChange}
+                      style={{ display: "none" }}
+                    />
+                  </div>
                   {imageProcessing && (
-                    <p className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>Rasmlar qayta ishlanmoqda...</p>
+                    <p className="text-xs mt-2" style={{ color: "var(--ink-soft)" }}>Rasmlar qayta ishlanmoqda...</p>
                   )}
                   {draft.images.length > 0 && (
-                    <p className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>
+                    <p className="text-xs mt-2" style={{ color: "var(--ink-soft)" }}>
                       Birinchi rasm (oltin ramkali) katalogda asosiy rasm sifatida ko'rinadi.
                     </p>
                   )}
