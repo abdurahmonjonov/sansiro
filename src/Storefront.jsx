@@ -478,7 +478,7 @@ const TRANSLATIONS = {
     order_details: "Buyurtma ma'lumotlari", order_confirmed: "Buyurtma qabul qilindi", close: "YOPISH",
     thank_you: "Rahmat", order_number_label: "Buyurtmangiz raqami:", will_call: "Tez orada operatorimiz sizga qo'ng'iroq qilib, buyurtmani tasdiqlaydi.",
     login_register_title: "Kirish / Ro'yxatdan o'tish",
-    payment_method_label: "To'lov usuli", cash_label: "Naqd pul", card_label: "Karta orqali", similar_products: "Shunga o'xshash mahsulotlar", trust_payment: "Xavfsiz to'lov", trust_delivery: "Tez yetkazib berish", trust_quality: "Sifat kafolati"
+    payment_method_label: "To'lov usuli", cash_label: "Naqd pul", card_label: "Karta orqali", similar_products: "Shunga o'xshash mahsulotlar", trust_payment: "Xavfsiz to'lov", trust_delivery: "Tez yetkazib berish", trust_quality: "Sifat kafolati", out_of_stock: "Stokda yo'q"
   },
   ru: {
     nav_catalog: "Каталог", nav_about: "О нас", nav_contact: "Контакты", nav_admin: "Админ-панель",
@@ -503,7 +503,7 @@ const TRANSLATIONS = {
     order_details: "Данные заказа", order_confirmed: "Заказ принят", close: "ЗАКРЫТЬ",
     thank_you: "Спасибо", order_number_label: "Номер вашего заказа:", will_call: "Наш оператор скоро позвонит вам и подтвердит заказ.",
     login_register_title: "Вход / Регистрация",
-    payment_method_label: "Способ оплаты", cash_label: "Наличными", card_label: "Картой", similar_products: "Похожие товары", trust_payment: "Безопасная оплата", trust_delivery: "Быстрая доставка", trust_quality: "Гарантия качества"
+    payment_method_label: "Способ оплаты", cash_label: "Наличными", card_label: "Картой", similar_products: "Похожие товары", trust_payment: "Безопасная оплата", trust_delivery: "Быстрая доставка", trust_quality: "Гарантия качества", out_of_stock: "Нет в наличии"
   },
   en: {
     nav_catalog: "Catalog", nav_about: "About", nav_contact: "Contact", nav_admin: "Admin panel",
@@ -528,7 +528,7 @@ const TRANSLATIONS = {
     order_details: "Order details", order_confirmed: "Order confirmed", close: "CLOSE",
     thank_you: "Thank you", order_number_label: "Your order number:", will_call: "Our operator will call you shortly to confirm the order.",
     login_register_title: "Sign in / Register",
-    payment_method_label: "Payment method", cash_label: "Cash", card_label: "Card", similar_products: "Similar products", trust_payment: "Secure payment", trust_delivery: "Fast delivery", trust_quality: "Quality guarantee"
+    payment_method_label: "Payment method", cash_label: "Cash", card_label: "Card", similar_products: "Similar products", trust_payment: "Secure payment", trust_delivery: "Fast delivery", trust_quality: "Quality guarantee", out_of_stock: "Out of stock"
   },
 };
 
@@ -1181,7 +1181,11 @@ export default function Sansiro() {
       </button>
       <div className="swatch aspect-square mx-3 mb-4">
         {p.image ? (
-          <img src={p.image} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img
+            src={p.image}
+            alt={p.name}
+            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: p.inStock === false ? 0.4 : 1 }}
+          />
         ) : (
           <>
             <div className="swatch-mark">
@@ -1189,6 +1193,16 @@ export default function Sansiro() {
             </div>
             <div className="swatch-watermark">SANSIRO</div>
           </>
+        )}
+        {p.inStock === false && (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ background: "rgba(32,28,22,0.15)" }}
+          >
+            <span className="font-mono text-xs px-3 py-1" style={{ background: "var(--paper)", color: "var(--ink)", border: "1px solid var(--line)" }}>
+              {t("out_of_stock")}
+            </span>
+          </div>
         )}
       </div>
       <div className="px-3 md:px-4 pb-4">
@@ -1440,7 +1454,17 @@ export default function Sansiro() {
               </div>
 
               <div>
-                <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{catLabel(selectedProduct.category)}</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs" style={{ color: "var(--ink-soft)" }}>{catLabel(selectedProduct.category)}</div>
+                  {selectedProduct.inStock === false && (
+                    <span
+                      className="text-xs px-2 py-0.5"
+                      style={{ color: "var(--danger)", border: "1px solid var(--danger)" }}
+                    >
+                      {t("out_of_stock")}
+                    </span>
+                  )}
+                </div>
                 <div className="font-display text-2xl md:text-3xl mt-1">{selectedProduct.name}</div>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="font-mono text-lg" style={{ color: "var(--gold)" }}>{money(selectedProduct.price)}</span>
@@ -1508,8 +1532,12 @@ export default function Sansiro() {
                   </div>
                 )}
 
-                <button onClick={addToCart} className="btn-ink w-full py-3 text-sm tracking-wide mt-8">
-                  {t("add_to_cart")}
+                <button
+                  onClick={addToCart}
+                  disabled={selectedProduct.inStock === false}
+                  className="btn-ink w-full py-3 text-sm tracking-wide mt-8"
+                >
+                  {selectedProduct.inStock === false ? t("out_of_stock") : t("add_to_cart")}
                 </button>
 
                 <TrustBadges
