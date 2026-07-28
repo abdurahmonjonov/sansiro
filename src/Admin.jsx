@@ -415,12 +415,12 @@ export default function SansiroAdmin() {
     "Bekor qilindi": (orderNumber) => `SANSIRO: buyurtmangiz (${orderNumber}) bekor qilindi.`,
   };
 
-  const notifyCustomer = async (phone, message) => {
+  const notifyCustomer = async (phone, text) => {
     try {
       await fetch(AUTH_FUNCTION_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "notify", phone, message }),
+        body: JSON.stringify({ action: "notify", phone, text }),
       });
     } catch (err) {
       // notification is best-effort — order status still updates even if this fails
