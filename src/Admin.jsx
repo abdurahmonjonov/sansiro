@@ -407,9 +407,34 @@ export default function SansiroAdmin() {
     await saveProducts(updated);
   };
 
+  const AUTH_FUNCTION_URL = "https://bhecsyaxlonixnguqlqw.supabase.co/functions/v1/telegram-auth";
+
+  const STATUS_MESSAGES = {
+    "Jarayonda": (orderNumber) => `SANSIRO: buyurtmangiz (${orderNumber}) hozir tayyorlanmoqda.`,
+    "Yakunlandi": (orderNumber) => `SANSIRO: buyurtmangiz (${orderNumber}) yakunlandi. Xaridingiz uchun rahmat!`,
+    "Bekor qilindi": (orderNumber) => `SANSIRO: buyurtmangiz (${orderNumber}) bekor qilindi.`,
+  };
+
+  const notifyCustomer = async (phone, message) => {
+    try {
+      await fetch(AUTH_FUNCTION_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "notify", phone, message }),
+      });
+    } catch (err) {
+      // notification is best-effort — order status still updates even if this fails
+    }
+  };
+
   const updateOrderStatus = async (orderNumber, status) => {
+    const order = orders.find((o) => o.orderNumber === orderNumber);
     const updated = orders.map((o) => (o.orderNumber === orderNumber ? { ...o, status } : o));
     await saveOrders(updated);
+    const buildMessage = STATUS_MESSAGES[status];
+    if (buildMessage && order?.customer?.phone) {
+      notifyCustomer(order.customer.phone, buildMessage(orderNumber));
+    }
   };
 
   const [confirmClearOrders, setConfirmClearOrders] = useState(false);
