@@ -494,6 +494,23 @@ export default function SansiroAdmin() {
     return { count: orders.length, revenue };
   }, [orders]);
 
+  const productSales = useMemo(() => {
+    const counts = {};
+    orders
+      .filter((o) => o.status !== "Bekor qilindi")
+      .forEach((o) => {
+        (o.items || []).forEach((it) => {
+          const key = it.name;
+          if (!counts[key]) counts[key] = { name: key, qty: 0, revenue: 0 };
+          counts[key].qty += it.qty;
+          counts[key].revenue += it.price * it.qty;
+        });
+      });
+    return Object.values(counts).sort((a, b) => b.qty - a.qty).slice(0, 8);
+  }, [orders]);
+
+  const maxSaleQty = productSales.length > 0 ? productSales[0].qty : 0;
+
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
     if (!q) return products;
@@ -633,6 +650,9 @@ export default function SansiroAdmin() {
           </button>
           <button onClick={() => setTab("promo")} className={`tab ${tab === "promo" ? "active" : ""}`}>
             PROMO-KODLAR ({promoCodes.length})
+          </button>
+          <button onClick={() => setTab("stats")} className={`tab ${tab === "stats" ? "active" : ""}`}>
+            STATISTIKA
           </button>
         </div>
 
@@ -950,6 +970,55 @@ export default function SansiroAdmin() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {tab === "stats" && (
+          <div className="max-w-3xl fade-in pb-10">
+            <div className="grid grid-cols-2 gap-4 mb-8 max-w-md">
+              <div className="stat-card p-5">
+                <div className="eyebrow">Jami buyurtmalar</div>
+                <div className="font-display text-3xl mt-2">{stats.count}</div>
+              </div>
+              <div className="stat-card p-5">
+                <div className="eyebrow">Umumiy summa</div>
+                <div className="font-mono text-xl mt-2">{money(stats.revenue)}</div>
+              </div>
+            </div>
+
+            <div className="card p-6">
+              <div className="eyebrow mb-1">Eng ko'p sotilganlar</div>
+              <p className="font-display text-xl mb-6">Mahsulotlar bo'yicha savdo</p>
+
+              {productSales.length === 0 ? (
+                <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+                  Hali sotuv ma'lumoti yo'q. Buyurtmalar kelgach, bu yerda ko'rinadi.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {productSales.map((p) => (
+                    <div key={p.name}>
+                      <div className="flex justify-between items-baseline mb-1.5">
+                        <span className="text-sm">{p.name}</span>
+                        <span className="font-mono text-xs" style={{ color: "var(--ink-soft)" }}>
+                          {p.qty} dona &middot; {money(p.revenue)}
+                        </span>
+                      </div>
+                      <div style={{ background: "var(--paper-deep)", height: 8, width: "100%" }}>
+                        <div
+                          style={{
+                            background: "var(--gold)",
+                            height: 8,
+                            width: `${Math.max(4, (p.qty / maxSaleQty) * 100)}%`,
+                            transition: "width 0.5s ease",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
