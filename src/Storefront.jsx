@@ -323,6 +323,15 @@ function UserIcon({ size = 18 }) {
   );
 }
 
+function PencilIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 15.5V20Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M13 6.5 17.5 11" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 function HeartIcon({ size = 18, filled = false }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} xmlns="http://www.w3.org/2000/svg" className="heart-pop">
@@ -2261,41 +2270,54 @@ export default function Sansiro() {
                 <div className="rounded-full flex items-center justify-center" style={{ width: 44, height: 44, background: "var(--paper-deep)", flexShrink: 0 }}>
                   <UserIcon size={20} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  {editingName ? (
-                    <div className="flex items-center gap-2">
+                <div className="font-display text-lg truncate">{profile.name}</div>
+              </div>
+
+              <div className="card" style={{ padding: 0 }}>
+                <div className="flex items-center justify-between gap-3 px-4 py-4" style={{ borderBottom: "1px solid var(--line)" }}>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs" style={{ color: "var(--ink-soft)" }}>Ism</div>
+                    {editingName ? (
                       <input
-                        className="input-line py-1 text-sm flex-1"
+                        className="input-line py-1 text-sm w-full mt-1"
                         value={nameInput}
                         onChange={(e) => setNameInput(e.target.value)}
                         autoFocus
                       />
-                      <button onClick={saveName} disabled={nameSaving} className="text-xs" style={{ color: "var(--gold)" }}>
+                    ) : (
+                      <div className="text-sm mt-0.5 truncate">{profile.name}</div>
+                    )}
+                  </div>
+                  {editingName ? (
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button onClick={saveName} disabled={nameSaving} className="btn-ink px-3 py-1.5 text-xs">
                         {nameSaving ? "..." : "Saqlash"}
                       </button>
-                      <button onClick={() => setEditingName(false)} className="text-xs" style={{ color: "var(--ink-soft)" }}>
+                      <button onClick={() => setEditingName(false)} className="btn-ghost px-3 py-1.5 text-xs">
                         Bekor
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <div className="font-display text-lg truncate">{profile.name}</div>
-                      <button onClick={startEditName} className="text-xs flex-shrink-0" style={{ color: "var(--ink-soft)" }}>
-                        Tahrirlash
-                      </button>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <div className="text-xs font-mono" style={{ color: "var(--ink-soft)" }}>{profile.phone}</div>
-                    <button onClick={startChangePhone} className="text-xs" style={{ color: "var(--ink-soft)" }}>
-                      O'zgartirish
+                    <button onClick={startEditName} className="btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 flex-shrink-0">
+                      <PencilIcon size={13} /> Tahrirlash
                     </button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 px-4 py-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs" style={{ color: "var(--ink-soft)" }}>Telefon raqam</div>
+                    <div className="text-sm font-mono mt-0.5">{profile.phone}</div>
                   </div>
+                  <button onClick={startChangePhone} className="btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 flex-shrink-0">
+                    <PencilIcon size={13} /> O'zgartirish
+                  </button>
                 </div>
               </div>
+
               <button
                 onClick={() => { setPanel("orders"); loadMyOrders(); }}
-                className="btn-ink w-full py-3 text-sm tracking-wide mb-3"
+                className="btn-ink w-full py-3 text-sm tracking-wide mb-3 mt-6"
               >
                 {t("my_orders")}
               </button>
