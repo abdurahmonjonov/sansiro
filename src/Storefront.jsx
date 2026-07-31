@@ -600,6 +600,10 @@ export default function Sansiro() {
   const [authCodeInput, setAuthCodeInput] = useState("");
   const [authError, setAuthError] = useState(null);
   const [authSending, setAuthSending] = useState(false);
+  const [changingPhone, setChangingPhone] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [nameSaving, setNameSaving] = useState(false);
 
   // Search, wishlist, and order-history state
   const [searchQuery, setSearchQuery] = useState("");
@@ -1095,6 +1099,7 @@ export default function Sansiro() {
       setAuthPhone("");
       setAuthCodeInput("");
       setAuthName("");
+      setChangingPhone(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }, 1400);
     return () => clearTimeout(timer);
@@ -1108,6 +1113,40 @@ export default function Sansiro() {
     }
     setProfile(null);
     setPanel("none");
+  };
+
+  const startEditName = () => {
+    setNameInput(profile.name);
+    setEditingName(true);
+  };
+
+  const saveName = async () => {
+    if (!nameInput.trim()) return;
+    setNameSaving(true);
+    const updated = { ...profile, name: nameInput.trim() };
+    setProfile(updated);
+    try {
+      await window.storage.set(PROFILE_KEY, JSON.stringify(updated), false);
+    } catch (err) {
+      // profile still updated for this session even if it couldn't be saved for next time
+    }
+    setNameSaving(false);
+    setEditingName(false);
+  };
+
+  const startChangePhone = () => {
+    setChangingPhone(true);
+    setAuthStep("phone");
+    setAuthPhone("");
+    setAuthError(null);
+  };
+
+  const cancelChangePhone = () => {
+    setChangingPhone(false);
+    setAuthStep("phone");
+    setAuthPhone("");
+    setAuthCodeInput("");
+    setAuthError(null);
   };
 
   const toggleWishlist = (productId) => {
@@ -2216,15 +2255,42 @@ export default function Sansiro() {
                 Ro'yxatdan muvaffaqiyatli o'tdingiz. Bosh sahifaga yo'naltirilmoqda...
               </p>
             </div>
-          ) : profile ? (
+          ) : profile && !changingPhone ? (
             <div className="fade-in">
               <div className="flex items-center gap-3 mb-6">
-                <div className="rounded-full flex items-center justify-center" style={{ width: 44, height: 44, background: "var(--paper-deep)" }}>
+                <div className="rounded-full flex items-center justify-center" style={{ width: 44, height: 44, background: "var(--paper-deep)", flexShrink: 0 }}>
                   <UserIcon size={20} />
                 </div>
-                <div>
-                  <div className="font-display text-lg">{profile.name}</div>
-                  <div className="text-xs font-mono" style={{ color: "var(--ink-soft)" }}>{profile.phone}</div>
+                <div className="flex-1 min-w-0">
+                  {editingName ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        className="input-line py-1 text-sm flex-1"
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        autoFocus
+                      />
+                      <button onClick={saveName} disabled={nameSaving} className="text-xs" style={{ color: "var(--gold)" }}>
+                        {nameSaving ? "..." : "Saqlash"}
+                      </button>
+                      <button onClick={() => setEditingName(false)} className="text-xs" style={{ color: "var(--ink-soft)" }}>
+                        Bekor
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="font-display text-lg truncate">{profile.name}</div>
+                      <button onClick={startEditName} className="text-xs flex-shrink-0" style={{ color: "var(--ink-soft)" }}>
+                        Tahrirlash
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="text-xs font-mono" style={{ color: "var(--ink-soft)" }}>{profile.phone}</div>
+                    <button onClick={startChangePhone} className="text-xs" style={{ color: "var(--ink-soft)" }}>
+                      O'zgartirish
+                    </button>
+                  </div>
                 </div>
               </div>
               <button
@@ -2255,6 +2321,11 @@ export default function Sansiro() {
               <button type="submit" disabled={authSending} className="btn-ink py-3 text-sm tracking-wide">
                 {authSending ? "YUBORILMOQDA..." : "KODNI YUBORISH"}
               </button>
+              {changingPhone && (
+                <button type="button" onClick={cancelChangePhone} className="btn-ghost py-3 text-sm tracking-wide">
+                  {t("back")}
+                </button>
+              )}
             </form>
           ) : (
             <form onSubmit={verifyCode} className="flex flex-col gap-5 fade-in">
