@@ -623,6 +623,12 @@ export default function Sansiro() {
   const [myOrdersLoaded, setMyOrdersLoaded] = useState(false);
   const [cancelingOrderNumber, setCancelingOrderNumber] = useState(null);
   const [cancelError, setCancelError] = useState(null);
+  const [trackOrderNumber, setTrackOrderNumber] = useState("");
+  const [trackPhone, setTrackPhone] = useState("");
+  const [trackResult, setTrackResult] = useState(null);
+  const [trackError, setTrackError] = useState(null);
+  const [trackLoading, setTrackLoading] = useState(false);
+  const [trackSearched, setTrackSearched] = useState(false);
 
   // Contact form state
   const [contactForm, setContactForm] = useState({ name: "", contact: "", message: "" });
@@ -1203,6 +1209,37 @@ export default function Sansiro() {
     }
   };
 
+  const trackOrder = async (e) => {
+    e.preventDefault();
+    if (!trackOrderNumber.trim() || !trackPhone.trim()) {
+      setTrackError("Buyurtma raqami va telefon raqamini kiriting.");
+      return;
+    }
+    setTrackLoading(true);
+    setTrackError(null);
+    setTrackResult(null);
+    try {
+      const result = await window.storage.get(ORDERS_KEY, true);
+      const list = result && result.value ? JSON.parse(result.value) : [];
+      const digits = trackPhone.replace(/[^0-9]/g, "");
+      const match = list.find(
+        (o) =>
+          o.orderNumber.trim().toUpperCase() === trackOrderNumber.trim().toUpperCase() &&
+          (o.customer?.phone || "").replace(/[^0-9]/g, "").endsWith(digits.slice(-9))
+      );
+      if (!match) {
+        setTrackError("Bunday buyurtma topilmadi. Buyurtma raqami va telefon raqamini tekshirib qayta urinib ko'ring.");
+      } else {
+        setTrackResult(match);
+      }
+    } catch (err) {
+      setTrackError("Qidirishda xatolik yuz berdi. Qayta urinib ko'ring.");
+    } finally {
+      setTrackLoading(false);
+      setTrackSearched(true);
+    }
+  };
+
   const filteredProducts = products
     .filter((p) => activeCategory === "Barchasi" || p.category === activeCategory)
     .filter((p) => p.name.toLowerCase().includes(searchQuery.trim().toLowerCase()));
@@ -1308,7 +1345,7 @@ export default function Sansiro() {
     setContactForm({ name: "", contact: "", message: "" });
   };
 
-  const KNOWN_PATHS = ["/", "/katalog"];
+  const KNOWN_PATHS = ["/", "/katalog", "/kuzatish"];
   const is404 =
     productsLoaded &&
     ((currentPath.startsWith("/product/") && !selectedProduct) ||
@@ -1759,6 +1796,70 @@ export default function Sansiro() {
             </div>
           )}
         </section>
+      ) : currentPath === "/kuzatish" ? (
+        <section className="px-5 md:px-12 py-16 max-w-md mx-auto fade-in">
+          <button onClick={() => navigateTo("/")} className="text-xs mb-6 hover:underline" style={{ color: "var(--ink-soft)" }}>
+            {t("back_to_home")}
+          </button>
+
+          <div className="crown-divider mb-8">
+            <hr className="hairline" />
+            <span className="font-display text-xl tracking-wide">Buyurtmani kuzatish</span>
+            <hr className="hairline" />
+          </div>
+
+          <form onSubmit={trackOrder} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>Buyurtma raqami</label>
+              <input
+                className="input-line py-2 text-sm font-mono"
+                placeholder="SS-123456"
+                value={trackOrderNumber}
+                onChange={(e) => setTrackOrderNumber(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs mb-1" style={{ color: "var(--ink-soft)" }}>Telefon raqam</label>
+              <input
+                className="input-line py-2 text-sm font-mono"
+                placeholder="+998 90 123 45 67"
+                value={trackPhone}
+                onChange={(e) => setTrackPhone(e.target.value)}
+              />
+            </div>
+            {trackError && <p className="text-xs" style={{ color: "var(--danger)" }}>{trackError}</p>}
+            <button type="submit" disabled={trackLoading} className="btn-ink py-3 text-sm tracking-wide mt-2">
+              {trackLoading ? "QIDIRILMOQDA..." : "TEKSHIRISH"}
+            </button>
+          </form>
+
+          {trackResult && (
+            <div className="card p-5 mt-8 fade-in">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-mono text-sm">{trackResult.orderNumber}</span>
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: "var(--paper-deep)", color: "var(--ink-soft)" }}
+                >
+                  {trackResult.status}
+                </span>
+              </div>
+              <div className="text-xs mb-3" style={{ color: "var(--ink-soft)" }}>
+                {new Date(trackResult.createdAt).toLocaleDateString("uz-UZ")}
+              </div>
+              {(trackResult.items || []).map((it) => (
+                <div key={`${it.productId}-${it.size}-${it.color || ""}`} className="text-xs flex justify-between py-1">
+                  <span>{it.name} ({it.size}{it.color ? `, ${it.color}` : ""}) &times; {it.qty}</span>
+                  <span className="font-mono">{money(it.price * it.qty)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-sm font-medium mt-2 pt-2" style={{ borderTop: "1px solid var(--line)" }}>
+                <span>{t("total")}</span>
+                <span className="font-mono">{money(trackResult.promoCode ? trackResult.total : trackResult.subtotal)}</span>
+              </div>
+            </div>
+          )}
+        </section>
       ) : (
       <>
       {/* Hero */}
@@ -1897,7 +1998,7 @@ export default function Sansiro() {
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-1" style={{ color: "var(--ink-soft)" }}>TELEFON</div>
-                <div className="font-mono">+998 95 818 70 30</div>
+                <div className="font-mono">+998 90 000 00 00</div>
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-2" style={{ color: "var(--ink-soft)" }}>IJTIMOIY TARMOQLAR</div>
@@ -1988,6 +2089,9 @@ export default function Sansiro() {
           </a>
         </div>
         <div className="flex justify-center gap-6 mt-5 text-xs" style={{ color: "var(--ink-soft)" }}>
+          <button onClick={() => navigateTo("/kuzatish")} className="hover:underline">
+            Buyurtmani kuzatish
+          </button>
           <button onClick={() => setPolicyView("return")} className="hover:underline">
             {t("return_policy")}
           </button>
