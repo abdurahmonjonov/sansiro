@@ -920,7 +920,6 @@ export default function Sansiro() {
         },
       ];
     });
-    setSelectedProduct(null);
     setPanel("cart");
     setCheckoutStep("cart");
   };
