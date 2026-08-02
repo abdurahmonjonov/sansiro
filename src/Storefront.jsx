@@ -962,7 +962,6 @@ export default function Sansiro() {
         },
       ];
     });
-    setPanel("cart");
     setCheckoutStep("cart");
   };
 
