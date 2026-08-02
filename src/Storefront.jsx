@@ -599,6 +599,8 @@ export default function Sansiro() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const catalogRef = useRef(null);
   const reviewFileInputRef = useRef(null);
+  const cartIconRef = useRef(null);
+  const productImageRef = useRef(null);
 
   // Auth / registration state
   const [profile, setProfile] = useState(null);
@@ -894,6 +896,46 @@ export default function Sansiro() {
       setReviewSubmitting(false);
       setReviewForm({ name: "", rating: 5, comment: "", images: [] });
     }
+  };
+
+  const flyToCart = () => {
+    const imgEl = productImageRef.current;
+    const cartEl = cartIconRef.current;
+    if (!imgEl || !cartEl) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const src = imgEl.currentSrc || imgEl.src;
+    if (!src) return;
+
+    const startRect = imgEl.getBoundingClientRect();
+    const endRect = cartEl.getBoundingClientRect();
+
+    const clone = document.createElement("img");
+    clone.src = src;
+    clone.style.position = "fixed";
+    clone.style.top = startRect.top + "px";
+    clone.style.left = startRect.left + "px";
+    clone.style.width = startRect.width + "px";
+    clone.style.height = startRect.height + "px";
+    clone.style.objectFit = "cover";
+    clone.style.zIndex = "9999";
+    clone.style.pointerEvents = "none";
+    clone.style.border = "1px solid var(--line)";
+    clone.style.transition = "transform 0.7s cubic-bezier(0.34, 0.02, 0.56, 1), opacity 0.7s ease 0.35s";
+    document.body.appendChild(clone);
+
+    const startCenterX = startRect.left + startRect.width / 2;
+    const startCenterY = startRect.top + startRect.height / 2;
+    const endCenterX = endRect.left + endRect.width / 2;
+    const endCenterY = endRect.top + endRect.height / 2;
+    const translateX = endCenterX - startCenterX;
+    const translateY = endCenterY - startCenterY;
+
+    requestAnimationFrame(() => {
+      clone.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.08)`;
+      clone.style.opacity = "0.2";
+    });
+
+    setTimeout(() => clone.remove(), 750);
   };
 
   const addToCart = () => {
@@ -1431,6 +1473,7 @@ export default function Sansiro() {
               )}
             </button>
             <button
+              ref={cartIconRef}
               onClick={() => setPanel("cart")}
               className="relative text-xs md:text-sm flex items-center gap-2 font-mono"
               aria-label="Savat"
@@ -1509,6 +1552,7 @@ export default function Sansiro() {
                 <div className="swatch aspect-square">
                   {galleryImages.length > 0 ? (
                     <img
+                      ref={productImageRef}
                       src={galleryImages[selectedImageIndex] || galleryImages[0]}
                       alt={selectedProduct.name}
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -1617,7 +1661,7 @@ export default function Sansiro() {
                 )}
 
                 <button
-                  onClick={addToCart}
+                  onClick={() => { flyToCart(); addToCart(); }}
                   disabled={selectedProduct.inStock === false}
                   className="btn-ink w-full py-3 text-sm tracking-wide mt-8"
                 >
