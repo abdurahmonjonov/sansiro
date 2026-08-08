@@ -631,6 +631,14 @@ export default function Sansiro() {
   const [trackError, setTrackError] = useState(null);
   const [trackLoading, setTrackLoading] = useState(false);
   const [trackSearched, setTrackSearched] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapPickedCoords, setMapPickedCoords] = useState(null);
+  const [mapGeocoding, setMapGeocoding] = useState(false);
+  const [mapError, setMapError] = useState(null);
+  const mapDivRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const mapMarkerRef = useRef(null);
 
   // Contact form state
   const [contactForm, setContactForm] = useState({ name: "", contact: "", message: "" });
@@ -1246,6 +1254,95 @@ export default function Sansiro() {
       setCancelError("Bekor qilishda xatolik yuz berdi. Qayta urinib ko'ring.");
     } finally {
       setCancelingOrderNumber(null);
+    }
+  };
+
+  const loadLeaflet = () => {
+    return new Promise((resolve, reject) => {
+      if (window.L) {
+        resolve(window.L);
+        return;
+      }
+      const cssLink = document.createElement("link");
+      cssLink.rel = "stylesheet";
+      cssLink.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(cssLink);
+
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.onload = () => resolve(window.L);
+      script.onerror = () => reject(new Error("Xaritani yuklab bo'lmadi"));
+      document.body.appendChild(script);
+    });
+  };
+
+  const openMapPicker = async () => {
+    setShowMapPicker(true);
+    setMapError(null);
+    setMapPickedCoords(null);
+    try {
+      const L = await loadLeaflet();
+      setTimeout(() => {
+        if (!mapDivRef.current) return;
+        const center = [40.2864, 71.9679]; // Quvasoy, Farg'ona — standart markaz
+        const map = L.map(mapDivRef.current).setView(center, 13);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(map);
+
+        const goldIcon = L.divIcon({
+          className: "",
+          html: '<div style="width:16px;height:16px;border-radius:50%;background:#97783E;border:2px solid #F3EEE3;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>',
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        });
+
+        map.on("click", (e) => {
+          const { lat, lng } = e.latlng;
+          setMapPickedCoords({ lat, lng });
+          if (mapMarkerRef.current) {
+            mapMarkerRef.current.setLatLng([lat, lng]);
+          } else {
+            mapMarkerRef.current = L.marker([lat, lng], { icon: goldIcon }).addTo(map);
+          }
+        });
+
+        mapInstanceRef.current = map;
+        setMapReady(true);
+      }, 50);
+    } catch (err) {
+      setMapError("Xaritani yuklab bo'lmadi. Internetni tekshirib, qayta urinib ko'ring.");
+    }
+  };
+
+  const closeMapPicker = () => {
+    setShowMapPicker(false);
+    setMapReady(false);
+    setMapPickedCoords(null);
+    setMapError(null);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+    }
+    mapMarkerRef.current = null;
+  };
+
+  const confirmMapPick = async () => {
+    if (!mapPickedCoords) return;
+    setMapGeocoding(true);
+    setMapError(null);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${mapPickedCoords.lat}&lon=${mapPickedCoords.lng}&accept-language=uz`
+      );
+      const data = await res.json();
+      const address = data.display_name || `${mapPickedCoords.lat.toFixed(5)}, ${mapPickedCoords.lng.toFixed(5)}`;
+      setOrderForm((f) => ({ ...f, address }));
+      closeMapPicker();
+    } catch (err) {
+      setMapError("Manzilni aniqlab bo'lmadi. Qayta urinib ko'ring yoki manzilni qo'lda kiriting.");
+    } finally {
+      setMapGeocoding(false);
     }
   };
 
@@ -2040,7 +2137,7 @@ export default function Sansiro() {
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-1" style={{ color: "var(--ink-soft)" }}>TELEFON</div>
-                <div className="font-mono">+998 95 818 70 30</div>
+                <div className="font-mono">+998 90 000 00 00</div>
               </div>
               <div>
                 <div className="text-xs tracking-wide mb-2" style={{ color: "var(--ink-soft)" }}>IJTIMOIY TARMOQLAR</div>
@@ -2145,6 +2242,44 @@ export default function Sansiro() {
           &copy; 2026 SANSIRO. {t("all_rights")}
         </p>
       </footer>
+
+      {showMapPicker && (
+        <div className="modal-backdrop" onClick={closeMapPicker}>
+          <div
+            className="fade-in max-w-lg w-full"
+            style={{ background: "var(--paper)", border: "1px solid var(--line)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4" style={{ borderBottom: "1px solid var(--line)" }}>
+              <span className="font-display text-lg">Manzilni xaritadan tanlang</span>
+              <button onClick={closeMapPicker} aria-label="Yopish" className="text-lg">&times;</button>
+            </div>
+            <div className="p-4">
+              <p className="text-xs mb-3" style={{ color: "var(--ink-soft)" }}>
+                Xaritada manzilingizni bosib belgilang.
+              </p>
+              <div
+                ref={mapDivRef}
+                style={{ width: "100%", height: 320, background: "var(--paper-deep)", border: "1px solid var(--line)" }}
+              />
+              {mapError && <p className="text-xs mt-3" style={{ color: "var(--danger)" }}>{mapError}</p>}
+              <div className="flex gap-3 mt-4">
+                <button type="button" onClick={closeMapPicker} className="btn-ghost flex-1 py-2.5 text-xs tracking-wide">
+                  {t("back")}
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmMapPick}
+                  disabled={!mapPickedCoords || mapGeocoding}
+                  className="btn-ink flex-1 py-2.5 text-xs tracking-wide"
+                >
+                  {mapGeocoding ? "..." : "TASDIQLASH"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {lightboxImage && (
         <div className="modal-backdrop" onClick={() => setLightboxImage(null)}>
@@ -2282,6 +2417,13 @@ export default function Sansiro() {
                   value={orderForm.address}
                   onChange={(e) => setOrderForm({ ...orderForm, address: e.target.value })}
                 />
+                <button
+                  type="button"
+                  onClick={openMapPicker}
+                  className="btn-ghost px-3 py-1.5 text-xs mt-2 flex items-center gap-1.5"
+                >
+                  📍 Xaritadan tanlash
+                </button>
               </div>
               <div>
                 <label className="block text-xs mb-2" style={{ color: "var(--ink-soft)" }}>{t("payment_method_label")}</label>
